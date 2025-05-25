@@ -4,15 +4,17 @@ pyBatis Core 모듈의 테스트
 이 파일은 pyBatis의 핵심 기능들을 테스트합니다.
 """
 
-import pytest
 from typing import List, Optional
+
+import pytest
 from pydantic import BaseModel
 
-from pybatis.core import PyBatisMapper, SqlSession, sql_query, sql_update, sql_select
+from pybatis.core import PyBatisMapper, SqlSession, sql_query, sql_select, sql_update
 
 
 class MockUser(BaseModel):
     """테스트용 사용자 모델"""
+
     id: int
     name: str
     email: str
@@ -32,7 +34,9 @@ class MockSqlSession(SqlSession):
         self.executed_parameters.append(parameters)
         return 1  # 영향받은 행 수
 
-    async def fetch_one(self, sql: str, parameters: Optional[dict] = None) -> Optional[dict]:
+    async def fetch_one(
+        self, sql: str, parameters: Optional[dict] = None
+    ) -> Optional[dict]:
         """하나의 레코드 조회를 모킹합니다."""
         self.executed_sql.append(sql)
         self.executed_parameters.append(parameters)
@@ -42,7 +46,9 @@ class MockSqlSession(SqlSession):
             return {"id": 1, "name": "테스트사용자", "email": "test@example.com"}
         return None
 
-    async def fetch_all(self, sql: str, parameters: Optional[dict] = None) -> List[dict]:
+    async def fetch_all(
+        self, sql: str, parameters: Optional[dict] = None
+    ) -> List[dict]:
         """모든 레코드 조회를 모킹합니다."""
         self.executed_sql.append(sql)
         self.executed_parameters.append(parameters)
@@ -186,7 +192,7 @@ class TestDecorators:
 
         assert isinstance(result, MockUser)
         assert result.id == 1
-        assert hasattr(get_user_by_id, '_sql')
+        assert hasattr(get_user_by_id, "_sql")
         assert get_user_by_id._sql == "SELECT * FROM users WHERE id = :id"
 
     @pytest.mark.asyncio
@@ -200,7 +206,7 @@ class TestDecorators:
         result = await create_user(mapper, name="테스트", email="test@example.com")
 
         assert result == 1
-        assert hasattr(create_user, '_sql')
+        assert hasattr(create_user, "_sql")
 
     @pytest.mark.asyncio
     async def test_sql_select_decorator(self, mapper):
@@ -214,7 +220,7 @@ class TestDecorators:
 
         assert len(result) == 2
         assert all(isinstance(user, MockUser) for user in result)
-        assert hasattr(get_all_users, '_sql')
+        assert hasattr(get_all_users, "_sql")
 
 
 class TestIntegration:
@@ -229,22 +235,16 @@ class TestIntegration:
         # 사용자 생성
         await mapper.insert(
             "INSERT INTO users (name, email) VALUES (:name, :email)",
-            {"name": "통합테스트", "email": "integration@example.com"}
+            {"name": "통합테스트", "email": "integration@example.com"},
         )
 
         # 사용자 조회
         user = await mapper.select_one(
-            "SELECT * FROM users WHERE id = :id",
-            {"id": 1},
-            MockUser
+            "SELECT * FROM users WHERE id = :id", {"id": 1}, MockUser
         )
 
         # 사용자 목록 조회
-        users = await mapper.select_list(
-            "SELECT * FROM users",
-            None,
-            MockUser
-        )
+        users = await mapper.select_list("SELECT * FROM users", None, MockUser)
 
         assert isinstance(user, MockUser)
         assert len(users) == 2

@@ -23,12 +23,20 @@
       ├── __init__.py         ✅
       └── test_core.py        ✅
 
-## 🧪 2. 테스트 환경 구성 (TDD 기반)
+## 🧪 2. 테스트 환경 구성 (TDD 기반) ✅
 
-- [ ] pytest 설치 및 설정
- - pytest.ini 또는 pyproject.toml에 테스트 설정 추가
- - tests/ 디렉토리에 초기 테스트 파일 생성
- - coverage 도구 설치 및 설정
+- [x] pytest 설치 및 설정 ✅
+  - pytest.ini 또는 pyproject.toml에 테스트 설정 추가 ✅
+  - tests/ 디렉토리에 초기 테스트 파일 생성 ✅
+  - coverage 도구 설치 및 설정 ✅
+- [x] 개발 도구 설정 ✅
+  - black을 사용한 코드 포맷팅 ✅
+  - isort를 사용한 import 정렬 ✅
+  - flake8을 사용한 코드 품질 검사 ✅
+  - mypy를 사용한 타입 체크 ✅
+- [x] 테스트 자동화 스크립트 작성 ✅
+  - scripts/test.sh 생성 ✅
+  - 94% 커버리지 달성 ✅
 
 ## 🧱 3. 최소 기능 구현 (MVP)
 - [ ] SQL 매핑 기능 구현

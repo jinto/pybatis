@@ -5,7 +5,7 @@ pyBatis - FastAPI를 위한 MyBatis 스타일의 SQL 매퍼
 Java의 MyBatis에서 영감을 받아 Pythonic한 방식으로 구현되었습니다.
 """
 
-from .core import PyBatisMapper, SqlSession, sql_query, sql_update, sql_select
+from .core import PyBatisMapper, SqlSession, sql_query, sql_select, sql_update
 
 __version__ = "0.1.0"
 __author__ = "pyBatis Contributors"
