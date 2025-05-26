@@ -150,25 +150,10 @@ class PyBatis:
             변환된 행 데이터
 
         Note:
-            이 메서드는 하위 호환성을 위해 유지되며,
-            새로운 _convert_row_data_with_schema 메서드 사용을 권장합니다.
+            이 메서드는 하위 호환성을 위해 유지되며, 현재는 원본 데이터를 그대로 반환합니다.
+            스키마 기반 변환은 _convert_row_data_with_schema 메서드를 사용하세요.
         """
-        if not row_data or self._db_type != "sqlite":
-            return row_data
-
-        # 기존 컬럼명 기반 변환 로직 (하위 호환성)
-        converted_data = {}
-        for key, value in row_data.items():
-            # SQLite에서 boolean 컬럼을 추론하는 방법:
-            # 1. 컬럼명에 'is_', 'has_', 'can_', 'should_' 등이 포함된 경우
-            # 2. 값이 0 또는 1인 integer인 경우
-            if (isinstance(value, int) and value in (0, 1) and
-                any(prefix in key.lower() for prefix in ['is_', 'has_', 'can_', 'should_', 'active', 'enabled', 'disabled', 'valid', 'visible'])):
-                converted_data[key] = bool(value)
-            else:
-                converted_data[key] = value
-
-        return converted_data
+        return row_data
 
     def _convert_rows_data(self, rows_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -179,8 +164,12 @@ class PyBatis:
 
         Returns:
             변환된 행 데이터 리스트
+
+        Note:
+            이 메서드는 하위 호환성을 위해 유지되며, 현재는 원본 데이터를 그대로 반환합니다.
+            스키마 기반 변환은 _convert_rows_data_with_schema 메서드를 사용하세요.
         """
-        return [self._convert_row_data(row) for row in rows_data]
+        return rows_data
 
     async def _convert_rows_data_with_schema(self, rows_data: List[Dict[str, Any]], table_name: Optional[str] = None) -> List[Dict[str, Any]]:
         """
