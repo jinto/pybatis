@@ -37,7 +37,7 @@
   - mypy를 사용한 타입 체크 ✅
 - [x] 테스트 자동화 스크립트 작성 ✅
   - scripts/test.sh 생성 ✅
-  - 69% 커버리지 달성 ✅
+  - 82% 커버리지 달성 ✅
 
 ## 🧱 3. 기본 기능 구현 (MVP) ✅
 
@@ -50,13 +50,15 @@
   - 쿼리 결과를 Pydantic 모델로 매핑 ✅
   - Repository 패턴 구현 ✅
 - [x] 테스트 작성 및 검증 ✅
-  - 10개 테스트 모두 통과 ✅
+  - 25개 테스트 모두 통과 ✅
   - MockConnection을 통한 단위 테스트 ✅
 
 ### 🔄 **확장 기능 구현** (진행 중)
-- [ ] SQL 파일 로딩 기능
-  - .sql 파일에서 SQL 문 로드
-  - 동적 SQL 템플릿 지원
+- [x] SQL 파일 로딩 기능 ✅
+  - .sql 파일에서 SQL 문 로드 ✅
+  - 이름 기반 SQL 추출 지원 (-- name=sql_name) ✅
+  - PyBatis 통합 (set_sql_loader_dir, load_sql 메서드) ✅
+  - 15개 테스트 모두 통과 ✅
 - [ ] 실제 데이터베이스 드라이버 통합
   - asyncpg (PostgreSQL) 지원
   - aiomysql (MySQL) 지원
