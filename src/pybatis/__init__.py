@@ -6,11 +6,13 @@ Java의 MyBatis에서 영감을 받아 Pythonic한 방식으로 구현되었습�
 """
 
 from .core import PyBatisMapper, SqlSession, sql_query, sql_select, sql_update
+from .pybatis import PyBatis
 
 __version__ = "0.1.0"
 __author__ = "pyBatis Contributors"
 
 __all__ = [
+    "PyBatis",
     "PyBatisMapper",
     "SqlSession",
     "sql_query",

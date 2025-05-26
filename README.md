@@ -57,57 +57,74 @@ class User(BaseModel):
 ### 2. 매퍼 클래스 생성
 
 ```python
-from typing import List, Optional
-from pybatis import sql_query, sql_update, PyBatisMapper
+# db.py
+from typing import Optional, List
+from pybatis import PyBatis  # pyBatis의 핵심 DB 실행기
+from .models import User
 
-class UserMapper:
+class UserRepository:
+    def __init__(self, db: PyBatis):
+        self.db = db
 
-    @sql_query("SELECT * FROM users WHERE id = :id", User)
-    async def get_user_by_id(self, mapper: PyBatisMapper, id: int) -> Optional[User]:
-        """ID로 사용자 조회"""
-        pass
+    async def count_active(self, active: bool) -> int:
+        """
+        활성 사용자 수를 반환합니다.
+        """
+        sql = "SELECT COUNT(*) FROM users WHERE is_active = :active"
+        # fetch_val: 단일 스칼라 값을 바로 리턴
+        return await self.db.fetch_val(sql, params={"active": active})
 
-    @sql_query("SELECT * FROM users", User)
-    async def get_all_users(self, mapper: PyBatisMapper) -> List[User]:
-        """모든 사용자 조회"""
-        pass
+    async def get_user_by_id(self, user_id: int) -> Optional[User]:
+        """
+        주어진 ID의 사용자 한 명을 User 모델로 반환합니다.
+        """
+        sql = "SELECT id, name, email, is_active FROM users WHERE id = :user_id"
+        row = await self.db.fetch_one(sql, params={"user_id": user_id})
+        return User(**row) if row else None
 
-    @sql_update("INSERT INTO users (name, email) VALUES (:name, :email)")
-    async def create_user(self, mapper: PyBatisMapper, name: str, email: str) -> int:
-        """사용자 생성"""
-        pass
+    async def get_users_by_activity(self, active_status: bool) -> List[User]:
+        """
+        활성 상태에 따라 사용자 목록을 User 모델 리스트로 반환합니다.
+        """
+        sql = "SELECT id, name, email, is_active FROM users WHERE is_active = :active_status"
+        rows = await self.db.fetch_all(sql, params={"active_status": active_status})
+        return [User(**r) for r in rows]
 ```
 
 ### 3. FastAPI와 통합
 
 ```python
-from fastapi import FastAPI, Depends
-from pybatis import get_mapper, PyBatisMapper
+from typing import List
+from fastapi import FastAPI, HTTPException
+from pybatis import PyBatis
+from .db import UserRepository
+from .models import User
 
 app = FastAPI()
+db = PyBatis(dsn="postgresql://user:pass@localhost:5432/mydb")
+user_repo = UserRepository(db)
 
-@app.get("/users/{user_id}")
-async def get_user(
-    user_id: int,
-    mapper: PyBatisMapper = Depends(get_mapper)
-):
-    user_mapper = UserMapper()
-    return await user_mapper.get_user_by_id(mapper, user_id)
+@app.get("/users/active-count")
+async def active_users_count():
+    count = await user_repo.count_active(active=True)
+    return {"active_user_count": count}
 
-@app.get("/users")
-async def get_users(mapper: PyBatisMapper = Depends(get_mapper)):
-    user_mapper = UserMapper()
-    return await user_mapper.get_all_users(mapper)
+@app.get("/users/{user_id}", response_model=User)
+async def read_user(user_id: int):
+    user = await user_repo.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
-@app.post("/users")
-async def create_user(
-    name: str,
-    email: str,
-    mapper: PyBatisMapper = Depends(get_mapper)
-):
-    user_mapper = UserMapper()
-    result = await user_mapper.create_user(mapper, name, email)
-    return {"created": result}
+@app.get("/users/", response_model=List[User])
+async def read_users_by_activity(active: bool = True):
+    return await user_repo.get_users_by_activity(active)
+
+@app.get("/users/all", response_model=List[User])
+async def read_all_users():
+    active = await user_repo.get_users_by_activity(True)
+    inactive = await user_repo.get_users_by_activity(False)
+    return active + inactive
 ```
 
 ## 🏗️ 아키텍처
