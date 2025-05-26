@@ -139,38 +139,6 @@ class PyBatis:
 
         return row_data
 
-    def _convert_row_data(self, row_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        데이터베이스별 데이터 타입을 Python 타입으로 자동 변환합니다.
-
-        Args:
-            row_data: 데이터베이스에서 가져온 행 데이터
-
-        Returns:
-            변환된 행 데이터
-
-        Note:
-            이 메서드는 하위 호환성을 위해 유지되며, 현재는 원본 데이터를 그대로 반환합니다.
-            스키마 기반 변환은 _convert_row_data_with_schema 메서드를 사용하세요.
-        """
-        return row_data
-
-    def _convert_rows_data(self, rows_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        여러 행의 데이터를 변환합니다.
-
-        Args:
-            rows_data: 데이터베이스에서 가져온 행 데이터 리스트
-
-        Returns:
-            변환된 행 데이터 리스트
-
-        Note:
-            이 메서드는 하위 호환성을 위해 유지되며, 현재는 원본 데이터를 그대로 반환합니다.
-            스키마 기반 변환은 _convert_rows_data_with_schema 메서드를 사용하세요.
-        """
-        return rows_data
-
     async def _convert_rows_data_with_schema(self, rows_data: List[Dict[str, Any]], table_name: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         스키마 정보를 사용하여 여러 행의 데이터를 변환합니다.
