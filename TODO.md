@@ -18,10 +18,11 @@
   ├── src/
   │   └── pybatis/
   │       ├── __init__.py     ✅
-  │       └── core.py         ✅
+  │       └── pybatis.py      ✅
   └── tests/
       ├── __init__.py         ✅
-      └── test_core.py        ✅
+      ├── test_pybatis.py     ✅
+      └── fixtures.py         ✅
 
 ## 🧪 2. 테스트 환경 구성 (TDD 기반) ✅
 
@@ -36,27 +37,48 @@
   - mypy를 사용한 타입 체크 ✅
 - [x] 테스트 자동화 스크립트 작성 ✅
   - scripts/test.sh 생성 ✅
-  - 94% 커버리지 달성 ✅
+  - 69% 커버리지 달성 ✅
 
-## 🧱 3. 최소 기능 구현 (MVP)
-- [ ] SQL 매핑 기능 구현
+## 🧱 3. 기본 기능 구현 (MVP) ✅
+
+### 🎯 **핵심 API 구현** ✅
+- [x] PyBatis 메인 클래스 구현 ✅
+  - DSN 기반 초기화 ✅
+  - fetch_val, fetch_one, fetch_all, execute 메서드 ✅
+  - 비동기 컨텍스트 매니저 지원 ✅
+- [x] Pydantic 모델과의 연동 ✅
+  - 쿼리 결과를 Pydantic 모델로 매핑 ✅
+  - Repository 패턴 구현 ✅
+- [x] 테스트 작성 및 검증 ✅
+  - 10개 테스트 모두 통과 ✅
+  - MockConnection을 통한 단위 테스트 ✅
+
+### 🔄 **확장 기능 구현** (진행 중)
 - [ ] SQL 파일 로딩 기능
-- [ ] SQL 실행 기능
-- [ ] Pydantic 모델과의 연동
-- [ ] 쿼리 결과를 Pydantic 모델로 매핑
-- [ ] FastAPI와의 통합
-- [ ] 의존성 주입을 통한 세션 관리
+  - .sql 파일에서 SQL 문 로드
+  - 동적 SQL 템플릿 지원
+- [ ] 실제 데이터베이스 드라이버 통합
+  - asyncpg (PostgreSQL) 지원
+  - aiomysql (MySQL) 지원
+  - aiosqlite (SQLite) 지원
+- [ ] FastAPI 의존성 주입 통합
+  - get_pybatis() 의존성 함수
+  - 요청별 세션 관리
+  - 트랜잭션 관리
 
-## 🧪 4. 테스트 작성 및 검증
-- [ ] 각 기능에 대한 단위 테스트 작성
+## 🧪 4. 고급 기능 및 최적화
+- [ ] 동적 SQL 지원
+  - Jinja2 템플릿 엔진 통합
+  - 조건부 블록, 반복문 지원
+- [ ] 연결 풀링 및 성능 최적화
+- [ ] 쿼리 로깅 및 모니터링
 - [ ] 테스트 커버리지 90% 이상 달성
-- [ ] 테스트 자동화 스크립트 작성
 
 ## 📦 5. 배포 준비
-- [ ] pyproject.toml에 배포 정보 추가
- - 버전, 설명, 작성자, 라이선스 등
-- [ ] README.md 작성
- - 프로젝트 소개, 설치 방법, 사용 예시 등
+- [x] pyproject.toml에 배포 정보 추가 ✅
+ - 버전, 설명, 작성자, 라이선스 등 ✅
+- [x] README.md 작성 ✅
+ - 프로젝트 소개, 설치 방법, 사용 예시 등 ✅
 - [ ] LICENSE 파일 추가
-- [ ]  PyPI 배포 테스트
+- [ ] PyPI 배포 테스트
  - uv publish 또는 twine을 사용한 배포
