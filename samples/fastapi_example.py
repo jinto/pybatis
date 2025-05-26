@@ -39,9 +39,9 @@ class User(BaseModel):
 
 class UserInput(BaseModel):
     """사용자 입력용 모델 (생성/업데이트 공통)"""
-    name: Optional[str] = None
-    email: Optional[str] = None
-    is_active: Optional[bool] = None
+    name: str
+    email: str
+    is_active: bool = True
 
 
 # Repository 패턴 구현
@@ -53,10 +53,6 @@ class UserRepository:
 
     async def create_user(self, user_data: UserInput) -> User:
         """새 사용자 생성"""
-        # 생성 시 필수 필드 검증
-        if not user_data.name or not user_data.email:
-            raise ValueError("name과 email은 필수 필드입니다")
-
         user_id = await self.pybatis.execute(
             """
             INSERT INTO users (name, email, is_active)
@@ -65,7 +61,7 @@ class UserRepository:
             {
                 "name": user_data.name,
                 "email": user_data.email,
-                "is_active": user_data.is_active if user_data.is_active is not None else True
+                "is_active": user_data.is_active
             }
         )
 
@@ -101,19 +97,19 @@ class UserRepository:
 
     async def update_user(self, user_id: int, user_update: UserInput) -> Optional[User]:
         """사용자 정보 업데이트"""
-        # 업데이트할 필드만 추출 (None 값 제외)
-        update_data = {k: v for k, v in user_update.model_dump().items() if v is not None}
-
-        if not update_data:
-            return await self.get_user_by_id(user_id)
-
-        # 동적 SQL 생성
-        set_clauses = [f"{key} = :{key}" for key in update_data.keys()]
-        sql = f"UPDATE users SET {', '.join(set_clauses)} WHERE id = :id"
-
-        update_data["id"] = user_id
-
-        affected_rows = await self.pybatis.execute(sql, update_data)
+        affected_rows = await self.pybatis.execute(
+            """
+            UPDATE users
+            SET name = :name, email = :email, is_active = :is_active
+            WHERE id = :id
+            """,
+            {
+                "id": user_id,
+                "name": user_update.name,
+                "email": user_update.email,
+                "is_active": user_update.is_active
+            }
+        )
 
         if affected_rows == 0:
             return None
