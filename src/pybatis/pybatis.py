@@ -38,10 +38,171 @@ class PyBatis:
         self.dsn = dsn
         self._connection = None
         self.sql_loader: Optional["SqlLoader"] = None
+        self._db_type: Optional[str] = None  # 데이터베이스 타입 저장
+        self._table_schemas: Dict[str, Dict[str, str]] = {}  # 테이블 스키마 캐시
 
         # SQL 디렉토리가 제공되면 SQL 로더 초기화
         if sql_dir:
             self.set_sql_loader_dir(sql_dir)
+
+    async def _get_table_schema(self, table_name: str) -> Dict[str, str]:
+        """
+        테이블의 스키마 정보를 가져옵니다.
+
+        Args:
+            table_name: 테이블명
+
+        Returns:
+            컬럼명 -> 데이터 타입 매핑 딕셔너리
+        """
+        if table_name in self._table_schemas:
+            return self._table_schemas[table_name]
+
+        if self._db_type == "sqlite" and hasattr(self._connection, 'execute'):
+            # SQLite PRAGMA를 사용하여 테이블 스키마 정보 가져오기
+            async with self._connection.execute(f"PRAGMA table_info({table_name})") as cursor:
+                columns = await cursor.fetchall()
+                schema = {}
+                for col in columns:
+                    col_dict = dict(col)
+                    col_name = col_dict['name']
+                    col_type = col_dict['type'].upper()
+                    schema[col_name] = col_type
+
+                self._table_schemas[table_name] = schema
+                return schema
+
+        return {}
+
+    async def _extract_table_name_from_sql(self, sql: str) -> Optional[str]:
+        """
+        SQL 문에서 테이블명을 추출합니다.
+
+        Args:
+            sql: SQL 문
+
+        Returns:
+            테이블명 또는 None
+        """
+        import re
+
+        # 간단한 SELECT 문에서 테이블명 추출
+        # FROM 절에서 테이블명을 찾는 정규식
+        patterns = [
+            r'FROM\s+([a-zA-Z_][a-zA-Z0-9_]*)',  # FROM table_name
+            r'UPDATE\s+([a-zA-Z_][a-zA-Z0-9_]*)',  # UPDATE table_name
+            r'INSERT\s+INTO\s+([a-zA-Z_][a-zA-Z0-9_]*)',  # INSERT INTO table_name
+        ]
+
+        sql_upper = sql.upper()
+        for pattern in patterns:
+            match = re.search(pattern, sql_upper)
+            if match:
+                return match.group(1).lower()
+
+        return None
+
+    async def _convert_row_data_with_schema(self, row_data: Dict[str, Any], table_name: Optional[str] = None) -> Dict[str, Any]:
+        """
+        데이터베이스 스키마 정보를 사용하여 데이터 타입을 자동 변환합니다.
+
+        Args:
+            row_data: 데이터베이스에서 가져온 행 데이터
+            table_name: 테이블명 (옵션)
+
+        Returns:
+            변환된 행 데이터
+        """
+        if not row_data or self._db_type != "sqlite":
+            return row_data
+
+        # 테이블 스키마 정보가 있는 경우에만 변환 수행
+        if table_name:
+            try:
+                schema = await self._get_table_schema(table_name)
+                converted_data = {}
+
+                for key, value in row_data.items():
+                    col_type = schema.get(key, '').upper()
+
+                    # SQLite에서 BOOLEAN 타입으로 정의된 컬럼을 boolean으로 변환
+                    if col_type == 'BOOLEAN' and isinstance(value, int) and value in (0, 1):
+                        converted_data[key] = bool(value)
+                    else:
+                        converted_data[key] = value
+
+                return converted_data
+            except Exception as e:
+                # 스키마 정보를 가져올 수 없는 경우 원본 데이터 반환
+                logger.debug(f"스키마 정보를 가져올 수 없습니다: {e}")
+                return row_data
+
+        return row_data
+
+    def _convert_row_data(self, row_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        데이터베이스별 데이터 타입을 Python 타입으로 자동 변환합니다.
+
+        Args:
+            row_data: 데이터베이스에서 가져온 행 데이터
+
+        Returns:
+            변환된 행 데이터
+
+        Note:
+            이 메서드는 하위 호환성을 위해 유지되며,
+            새로운 _convert_row_data_with_schema 메서드 사용을 권장합니다.
+        """
+        if not row_data or self._db_type != "sqlite":
+            return row_data
+
+        # 기존 컬럼명 기반 변환 로직 (하위 호환성)
+        converted_data = {}
+        for key, value in row_data.items():
+            # SQLite에서 boolean 컬럼을 추론하는 방법:
+            # 1. 컬럼명에 'is_', 'has_', 'can_', 'should_' 등이 포함된 경우
+            # 2. 값이 0 또는 1인 integer인 경우
+            if (isinstance(value, int) and value in (0, 1) and
+                any(prefix in key.lower() for prefix in ['is_', 'has_', 'can_', 'should_', 'active', 'enabled', 'disabled', 'valid', 'visible'])):
+                converted_data[key] = bool(value)
+            else:
+                converted_data[key] = value
+
+        return converted_data
+
+    def _convert_rows_data(self, rows_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        여러 행의 데이터를 변환합니다.
+
+        Args:
+            rows_data: 데이터베이스에서 가져온 행 데이터 리스트
+
+        Returns:
+            변환된 행 데이터 리스트
+        """
+        return [self._convert_row_data(row) for row in rows_data]
+
+    async def _convert_rows_data_with_schema(self, rows_data: List[Dict[str, Any]], table_name: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        스키마 정보를 사용하여 여러 행의 데이터를 변환합니다.
+
+        Args:
+            rows_data: 데이터베이스에서 가져온 행 데이터 리스트
+            table_name: 테이블명 (옵션)
+
+        Returns:
+            변환된 행 데이터 리스트
+        """
+        if not rows_data:
+            return rows_data
+
+        # 첫 번째 행으로 스키마 정보를 가져오고 모든 행에 적용
+        converted_rows = []
+        for row in rows_data:
+            converted_row = await self._convert_row_data_with_schema(row, table_name)
+            converted_rows.append(converted_row)
+
+        return converted_rows
 
     def set_sql_loader_dir(self, sql_dir: Union[str, Path]) -> None:
         """
@@ -120,6 +281,7 @@ class PyBatis:
             raise ValueError("DSN이 설정되지 않았습니다.")
 
         db_type, connection_info = self._parse_dsn()
+        self._db_type = db_type  # 데이터베이스 타입 저장
 
         logger.info(f"데이터베이스 연결 중: {db_type}")
 
@@ -179,56 +341,72 @@ class PyBatis:
     ) -> Optional[Dict[str, Any]]:
         """
         하나의 레코드를 반환합니다.
+        SQLite의 경우 스키마 정보를 기반으로 boolean 타입을 자동으로 변환합니다.
 
         Args:
             sql: 실행할 SQL 문
             params: SQL 파라미터
 
         Returns:
-            레코드 딕셔너리 또는 None
+            레코드 딕셔너리 또는 None (boolean 자동 변환 적용)
         """
         if self._connection is None:
             raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
 
         logger.debug(f"SQL 실행 (fetch_one): {sql}, params: {params}")
 
+        # SQL에서 테이블명 추출
+        table_name = await self._extract_table_name_from_sql(sql)
+
         # aiosqlite 연결인 경우
         if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
             async with self._connection.execute(sql, params or {}) as cursor:
                 row = await cursor.fetchone()
-                return dict(row) if row else None
+                if row is None:
+                    return None
+                row_data = dict(row)
+                return await self._convert_row_data_with_schema(row_data, table_name)
         else:
             # 테스트용 MockConnection
             row = await self._connection.fetchrow(sql, params)
-            return dict(row) if row else None
+            if row is None:
+                return None
+            row_data = dict(row)
+            return await self._convert_row_data_with_schema(row_data, table_name)
 
     async def fetch_all(
         self, sql: str, params: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """
         모든 레코드를 반환합니다.
+        SQLite의 경우 스키마 정보를 기반으로 boolean 타입을 자동으로 변환합니다.
 
         Args:
             sql: 실행할 SQL 문
             params: SQL 파라미터
 
         Returns:
-            레코드 딕셔너리들의 리스트
+            레코드 딕셔너리들의 리스트 (boolean 자동 변환 적용)
         """
         if self._connection is None:
             raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
 
         logger.debug(f"SQL 실행 (fetch_all): {sql}, params: {params}")
 
+        # SQL에서 테이블명 추출
+        table_name = await self._extract_table_name_from_sql(sql)
+
         # aiosqlite 연결인 경우
         if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
             async with self._connection.execute(sql, params or {}) as cursor:
                 rows = await cursor.fetchall()
-                return [dict(row) for row in rows]
+                rows_data = [dict(row) for row in rows]
+                return await self._convert_rows_data_with_schema(rows_data, table_name)
         else:
             # 테스트용 MockConnection
             rows = await self._connection.fetch(sql, params)
-            return [dict(row) for row in rows]
+            rows_data = [dict(row) for row in rows]
+            return await self._convert_rows_data_with_schema(rows_data, table_name)
 
     async def execute(self, sql: str, params: Optional[Dict[str, Any]] = None) -> Any:
         """

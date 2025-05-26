@@ -437,3 +437,140 @@ class TestSQLiteRepository:
         # Repository 메서드로 데이터 조회
         count = await repo.count_active(active=True)
         assert count == 1
+
+
+class TestSQLiteSchemaBasedBooleanConversion:
+    """SQLite 스키마 기반 boolean 자동 변환 테스트"""
+
+    @pytest.fixture
+    async def temp_db_with_boolean_schema(self):
+        """BOOLEAN 타입 컬럼이 있는 임시 SQLite 데이터베이스 픽스처"""
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_file:
+            db_path = temp_file.name
+
+        dsn = f"sqlite:///{db_path}"
+
+        try:
+            db = PyBatis(dsn=dsn)
+            await db.connect()
+
+            # BOOLEAN 타입으로 명시적으로 정의된 테이블 생성
+            await db.execute("""
+                CREATE TABLE test_users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    is_verified BOOLEAN DEFAULT FALSE,
+                    has_premium BOOLEAN DEFAULT FALSE
+                )
+            """)
+
+            # 테스트 데이터 삽입
+            await db.execute(
+                "INSERT INTO test_users (name, email, is_active, is_verified, has_premium) VALUES (:name, :email, :is_active, :is_verified, :has_premium)",
+                params={"name": "테스트사용자1", "email": "test1@example.com", "is_active": True, "is_verified": False, "has_premium": True},
+            )
+            await db.execute(
+                "INSERT INTO test_users (name, email, is_active, is_verified, has_premium) VALUES (:name, :email, :is_active, :is_verified, :has_premium)",
+                params={"name": "테스트사용자2", "email": "test2@example.com", "is_active": False, "is_verified": True, "has_premium": False},
+            )
+
+            yield db
+
+        finally:
+            await db.close()
+            Path(db_path).unlink(missing_ok=True)
+
+    @pytest.mark.asyncio
+    async def test_schema_based_boolean_conversion_fetch_one(self, temp_db_with_boolean_schema):
+        """스키마 기반 boolean 변환 - fetch_one 테스트"""
+        row = await temp_db_with_boolean_schema.fetch_one(
+            "SELECT id, name, email, is_active, is_verified, has_premium FROM test_users WHERE name = :name",
+            params={"name": "테스트사용자1"},
+        )
+
+        assert row is not None
+        assert row["name"] == "테스트사용자1"
+        assert row["email"] == "test1@example.com"
+
+        # 스키마 기반 boolean 자동 변환 확인
+        assert row["is_active"] is True  # True -> True
+        assert row["is_verified"] is False  # False -> False
+        assert row["has_premium"] is True  # True -> True
+
+        # 타입 확인
+        assert isinstance(row["is_active"], bool)
+        assert isinstance(row["is_verified"], bool)
+        assert isinstance(row["has_premium"], bool)
+
+    @pytest.mark.asyncio
+    async def test_schema_based_boolean_conversion_fetch_all(self, temp_db_with_boolean_schema):
+        """스키마 기반 boolean 변환 - fetch_all 테스트"""
+        rows = await temp_db_with_boolean_schema.fetch_all(
+            "SELECT id, name, email, is_active, is_verified, has_premium FROM test_users ORDER BY id"
+        )
+
+        assert len(rows) == 2
+
+        # 첫 번째 사용자
+        user1 = rows[0]
+        assert user1["name"] == "테스트사용자1"
+        assert user1["is_active"] is True
+        assert user1["is_verified"] is False
+        assert user1["has_premium"] is True
+        assert all(isinstance(user1[col], bool) for col in ["is_active", "is_verified", "has_premium"])
+
+        # 두 번째 사용자
+        user2 = rows[1]
+        assert user2["name"] == "테스트사용자2"
+        assert user2["is_active"] is False
+        assert user2["is_verified"] is True
+        assert user2["has_premium"] is False
+        assert all(isinstance(user2[col], bool) for col in ["is_active", "is_verified", "has_premium"])
+
+    @pytest.mark.asyncio
+    async def test_schema_info_caching(self, temp_db_with_boolean_schema):
+        """스키마 정보 캐싱 테스트"""
+        db = temp_db_with_boolean_schema
+
+        # 첫 번째 쿼리 - 스키마 정보 로드
+        await db.fetch_one("SELECT * FROM test_users WHERE id = 1")
+
+        # 스키마 캐시 확인
+        assert "test_users" in db._table_schemas
+        schema = db._table_schemas["test_users"]
+        assert schema["is_active"] == "BOOLEAN"
+        assert schema["is_verified"] == "BOOLEAN"
+        assert schema["has_premium"] == "BOOLEAN"
+        assert schema["name"] == "TEXT"
+        assert schema["email"] == "TEXT"
+
+    @pytest.mark.asyncio
+    async def test_non_boolean_columns_unchanged(self, temp_db_with_boolean_schema):
+        """boolean이 아닌 컬럼은 변환되지 않는지 테스트"""
+        row = await temp_db_with_boolean_schema.fetch_one(
+            "SELECT id, name, email FROM test_users WHERE id = 1"
+        )
+
+        assert row is not None
+        assert isinstance(row["id"], int)
+        assert isinstance(row["name"], str)
+        assert isinstance(row["email"], str)
+
+    @pytest.mark.asyncio
+    async def test_table_name_extraction(self, temp_db_with_boolean_schema):
+        """SQL에서 테이블명 추출 테스트"""
+        db = temp_db_with_boolean_schema
+
+        # 다양한 SQL 패턴에서 테이블명 추출 테스트
+        test_cases = [
+            ("SELECT * FROM test_users", "test_users"),
+            ("SELECT id, name FROM test_users WHERE id = 1", "test_users"),
+            ("UPDATE test_users SET name = 'test'", "test_users"),
+            ("INSERT INTO test_users (name) VALUES ('test')", "test_users"),
+        ]
+
+        for sql, expected_table in test_cases:
+            table_name = await db._extract_table_name_from_sql(sql)
+            assert table_name == expected_table
