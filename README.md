@@ -153,7 +153,7 @@ source .venv/bin/activate
 uv pip install -e ".[dev]"
 
 # 테스트 실행
-pytest
+uv run pytest
 
 # 코드 포맷팅
 black src tests
@@ -167,13 +167,13 @@ mypy src
 
 ```bash
 # 모든 테스트 실행
-pytest
+uv run pytest
 
 # 커버리지 포함 테스트
-pytest --cov=pybatis --cov-report=html
+uv run pytest --cov=pybatis --cov-report=html
 
 # 특정 테스트 파일 실행
-pytest tests/test_core.py
+uv run pytest tests/test_core.py
 ```
 
 ## 🤝 기여하기
