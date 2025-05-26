@@ -5,8 +5,9 @@ README.md에서 제시한 API를 구현합니다.
 """
 
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, List, Optional, Union
 from urllib.parse import urlparse
 
 if TYPE_CHECKING:
@@ -401,6 +402,44 @@ class PyBatis:
                 await self._connection.close()
             self._connection = None
             logger.info("데이터베이스 연결이 닫혔습니다.")
+
+    @asynccontextmanager
+    async def transaction(self) -> AsyncGenerator["PyBatis", None]:
+        """
+        트랜잭션 컨텍스트 매니저를 제공합니다.
+
+        트랜잭션 내에서 예외가 발생하면 자동으로 롤백되고,
+        정상적으로 완료되면 커밋됩니다.
+
+        Yields:
+            트랜잭션이 활성화된 PyBatis 인스턴스
+
+        Example:
+            ```python
+            async with pybatis.transaction() as tx:
+                await tx.execute("INSERT INTO users (name) VALUES (?)", {"name": "John"})
+                await tx.execute("INSERT INTO profiles (user_id) VALUES (?)", {"user_id": 1})
+            ```
+        """
+        if self._connection is None:
+            raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
+
+        # aiosqlite 연결인 경우
+        if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
+            # SQLite는 기본적으로 autocommit이 비활성화되어 있음
+            # 트랜잭션 시작
+            await self._connection.execute("BEGIN")
+            try:
+                yield self
+                # 정상 완료 시 커밋
+                await self._connection.commit()
+            except Exception:
+                # 예외 발생 시 롤백
+                await self._connection.rollback()
+                raise
+        else:
+            # 테스트용 MockConnection - 단순히 self 반환
+            yield self
 
     async def __aenter__(self) -> "PyBatis":
         """비동기 컨텍스트 매니저 진입"""

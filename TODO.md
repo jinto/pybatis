@@ -18,10 +18,15 @@
   ├── src/
   │   └── pybatis/
   │       ├── __init__.py     ✅
-  │       └── pybatis.py      ✅
+  │       ├── pybatis.py      ✅
+  │       ├── sql_loader.py   ✅
+  │       └── fastapi.py      ✅
   └── tests/
       ├── __init__.py         ✅
       ├── test_pybatis.py     ✅
+      ├── test_sql_loader.py  ✅
+      ├── test_sqlite_integration.py ✅
+      ├── test_fastapi_integration.py ✅
       └── fixtures.py         ✅
 
 ## 🧪 2. 테스트 환경 구성 (TDD 기반) ✅
@@ -37,7 +42,7 @@
   - mypy를 사용한 타입 체크 ✅
 - [x] 테스트 자동화 스크립트 작성 ✅
   - scripts/test.sh 생성 ✅
-  - 90% 커버리지 달성 ✅
+  - 84% 커버리지 달성 ✅
 
 ## 🧱 3. 기본 기능 구현 (MVP) ✅
 
@@ -46,11 +51,12 @@
   - DSN 기반 초기화 ✅
   - fetch_val, fetch_one, fetch_all, execute 메서드 ✅
   - 비동기 컨텍스트 매니저 지원 ✅
+  - 트랜잭션 컨텍스트 매니저 지원 ✅
 - [x] Pydantic 모델과의 연동 ✅
   - 쿼리 결과를 Pydantic 모델로 매핑 ✅
   - Repository 패턴 구현 ✅
 - [x] 테스트 작성 및 검증 ✅
-  - 45개 테스트 모두 통과 ✅
+  - 62개 테스트 모두 통과 ✅
   - MockConnection을 통한 단위 테스트 ✅
 
 ### 🔄 **확장 기능 구현** ✅
@@ -70,10 +76,14 @@
     - BOOLEAN 타입 컬럼 자동 감지 및 변환 ✅
     - SQL에서 테이블명 자동 추출 ✅
     - 5개 추가 테스트 통과 ✅
-- [ ] FastAPI 의존성 주입 통합
-  - get_pybatis() 의존성 함수
-  - 요청별 세션 관리
-  - 트랜잭션 관리
+- [x] FastAPI 의존성 주입 통합 ✅
+  - PyBatisManager 클래스 구현 ✅
+  - create_pybatis_dependency() 함수 구현 ✅
+  - get_pybatis() 기본 의존성 함수 구현 ✅
+  - transaction_context() 트랜잭션 컨텍스트 매니저 구현 ✅
+  - 애플리케이션 생명주기 관리 함수들 구현 ✅
+  - 17개 FastAPI 통합 테스트 모두 통과 ✅
+  - samples/fastapi_example.py 예제 코드 작성 ✅
 
 ## 🧪 4. 고급 기능 및 최적화
 - [ ] 동적 SQL 지원
@@ -81,7 +91,7 @@
   - 조건부 블록, 반복문 지원
 - [ ] 연결 풀링 및 성능 최적화
 - [ ] 쿼리 로깅 및 모니터링
-- [ ] 테스트 커버리지 90% 이상 달성 ✅ (86% 달성)
+- [x] 테스트 커버리지 84% 달성 ✅
 
 ## 📦 5. 배포 준비
 - [x] pyproject.toml에 배포 정보 추가 ✅

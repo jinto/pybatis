@@ -161,6 +161,8 @@ isort src tests
 
 # 타입 체크
 mypy src
+
+uv run scripts/demo_sqlite_pydantic.py
 ```
 
 ## 📊 테스트
