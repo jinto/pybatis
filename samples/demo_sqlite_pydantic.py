@@ -43,30 +43,27 @@ class UserRepository:
         return result  # SQLite에서는 lastrowid 반환
 
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
-        """ID로 사용자 조회 - PyBatis가 자동으로 boolean 변환 처리"""
+        """ID로 사용자 조회"""
         sql = "SELECT id, name, email, is_active FROM users WHERE id = :user_id"
         row = await self.db.fetch_one(sql, params={"user_id": user_id})
 
         if row is None:
             return None
 
-        # PyBatis가 BOOLEAN 타입 컬럼을 자동으로 변환하므로 직접 사용 가능
         return User(**row)
 
     async def get_all_users(self) -> List[User]:
-        """모든 사용자 조회 - PyBatis가 자동으로 boolean 변환 처리"""
+        """모든 사용자 조회"""
         sql = "SELECT id, name, email, is_active FROM users ORDER BY id"
         rows = await self.db.fetch_all(sql)
 
-        # PyBatis가 BOOLEAN 타입 컬럼을 자동으로 변환하므로 직접 사용 가능
         return [User(**row) for row in rows]
 
     async def get_active_users(self) -> List[User]:
-        """활성 사용자만 조회 - PyBatis가 자동으로 boolean 변환 처리"""
+        """활성 사용자만 조회"""
         sql = "SELECT id, name, email, is_active FROM users WHERE is_active = :active ORDER BY id"
         rows = await self.db.fetch_all(sql, params={"active": True})
 
-        # PyBatis가 BOOLEAN 타입 컬럼을 자동으로 변환하므로 직접 사용 가능
         return [User(**row) for row in rows]
 
     async def count_users(self) -> int:
@@ -108,7 +105,7 @@ async def main():
                     is_active BOOLEAN DEFAULT TRUE
                 )
             """)
-            print("✅ users 테이블 생성 완료 (BOOLEAN 타입 사용)")
+            print("✅ users 테이블 생성 완료")
 
             # Repository 인스턴스 생성
             repo = UserRepository(db)
@@ -124,7 +121,7 @@ async def main():
             print(f"   - 박민수 (ID: {user3_id}) - 비활성")
 
             # 2. 단일 사용자 조회 (Pydantic 모델로 반환)
-            print("\n🔍 단일 사용자 조회 (자동 boolean 변환):")
+            print("\n🔍 단일 사용자 조회:")
             user = await repo.get_user_by_id(1)
             if user:
                 print(f"   - User 객체: {user}")
@@ -134,11 +131,11 @@ async def main():
                 print(f"   - 활성 상태: {user.is_active} (타입: {type(user.is_active)})")
 
             # 3. 모든 사용자 조회 (Pydantic 모델 리스트로 반환)
-            print("\n📋 모든 사용자 조회 (자동 boolean 변환):")
+            print("\n📋 모든 사용자 조회:")
             all_users = await repo.get_all_users()
             for user in all_users:
                 status = "활성" if user.is_active else "비활성"
-                print(f"   - {user.name} ({user.email}) - {status} (boolean: {type(user.is_active)})")
+                print(f"   - {user.name} ({user.email}) - {status}")
 
             # 4. 활성 사용자만 조회
             print("\n✅ 활성 사용자만 조회:")
@@ -160,7 +157,7 @@ async def main():
                 updated_user = await repo.get_user_by_id(3)
                 if updated_user:
                     status = "활성" if updated_user.is_active else "비활성"
-                    print(f"   - 업데이트된 상태: {updated_user.name} - {status} (boolean: {type(updated_user.is_active)})")
+                    print(f"   - 업데이트된 상태: {updated_user.name} - {status}")
 
             # 7. 최종 활성 사용자 목록
             print("\n🎉 최종 활성 사용자 목록:")
@@ -169,7 +166,6 @@ async def main():
                 print(f"   - {user.name} ({user.email}) - is_active: {user.is_active}")
 
             print(f"\n✨ 총 {len(final_active_users)}명의 활성 사용자")
-            print("\n🎯 PyBatis가 BOOLEAN 타입을 자동으로 Python bool로 변환했습니다!")
 
     finally:
         # 임시 파일 정리

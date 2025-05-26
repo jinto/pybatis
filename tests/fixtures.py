@@ -35,7 +35,6 @@ class UserRepository:
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
         """
         주어진 ID의 사용자 한 명을 User 모델로 반환합니다.
-        PyBatis가 자동으로 boolean 변환을 처리합니다.
         """
         sql = "SELECT id, name, email, is_active FROM users WHERE id = :user_id"
         row = await self.db.fetch_one(sql, params={"user_id": user_id})
@@ -43,13 +42,11 @@ class UserRepository:
         if row is None:
             return None
 
-        # PyBatis가 자동으로 boolean 변환을 처리하므로 직접 사용 가능
         return User(**row)
 
     async def get_users_by_activity(self, active_status: bool) -> List[User]:
         """
         활성 상태에 따라 사용자 목록을 User 모델 리스트로 반환합니다.
-        PyBatis가 자동으로 boolean 변환을 처리합니다.
         """
         sql = (
             "SELECT id, name, email, is_active FROM users "
@@ -57,5 +54,4 @@ class UserRepository:
         )
         rows = await self.db.fetch_all(sql, params={"active_status": active_status})
 
-        # PyBatis가 자동으로 boolean 변환을 처리하므로 직접 사용 가능
         return [User(**row) for row in rows]

@@ -341,14 +341,13 @@ class PyBatis:
     ) -> Optional[Dict[str, Any]]:
         """
         하나의 레코드를 반환합니다.
-        SQLite의 경우 스키마 정보를 기반으로 boolean 타입을 자동으로 변환합니다.
 
         Args:
             sql: 실행할 SQL 문
             params: SQL 파라미터
 
         Returns:
-            레코드 딕셔너리 또는 None (boolean 자동 변환 적용)
+            레코드 딕셔너리 또는 None
         """
         if self._connection is None:
             raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
@@ -379,14 +378,13 @@ class PyBatis:
     ) -> List[Dict[str, Any]]:
         """
         모든 레코드를 반환합니다.
-        SQLite의 경우 스키마 정보를 기반으로 boolean 타입을 자동으로 변환합니다.
 
         Args:
             sql: 실행할 SQL 문
             params: SQL 파라미터
 
         Returns:
-            레코드 딕셔너리들의 리스트 (boolean 자동 변환 적용)
+            레코드 딕셔너리들의 리스트
         """
         if self._connection is None:
             raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
