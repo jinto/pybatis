@@ -21,9 +21,7 @@ from pybatis import PyBatis
 from pybatis.fastapi import (
     PyBatisManager,
     create_pybatis_dependency,
-    get_pybatis,
     transaction_context,
-    lifespan_pybatis,
 )
 
 
@@ -137,25 +135,15 @@ class UserRepository:
         return count
 
 
-# 방법 1: 환경변수를 사용한 기본 설정
-# DATABASE_URL 환경변수가 설정되어 있어야 함
-async def get_user_repository_default(
+# PyBatis 매니저 설정 및 의존성 함수 생성
+manager = PyBatisManager(dsn="sqlite:///example.db")
+get_pybatis = create_pybatis_dependency(manager)
+
+
+async def get_user_repository(
     pybatis: PyBatis = Depends(get_pybatis)
 ) -> UserRepository:
-    """기본 의존성을 사용한 Repository 생성"""
-    return UserRepository(pybatis)
-
-
-# 방법 2: 커스텀 매니저를 사용한 설정
-# 더 세밀한 제어가 필요한 경우 사용
-manager = PyBatisManager(dsn="sqlite:///example.db")
-get_pybatis_custom = create_pybatis_dependency(manager)
-
-
-async def get_user_repository_custom(
-    pybatis: PyBatis = Depends(get_pybatis_custom)
-) -> UserRepository:
-    """커스텀 매니저를 사용한 Repository 생성"""
+    """Repository 의존성 함수"""
     return UserRepository(pybatis)
 
 
@@ -193,7 +181,7 @@ app = FastAPI(
 @app.post("/users/", response_model=User)
 async def create_user(
     user_data: UserCreate,
-    user_repo: UserRepository = Depends(get_user_repository_custom)
+    user_repo: UserRepository = Depends(get_user_repository)
 ):
     """새 사용자 생성"""
     return await user_repo.create_user(user_data)
@@ -202,7 +190,7 @@ async def create_user(
 @app.get("/users/{user_id}", response_model=User)
 async def get_user(
     user_id: int,
-    user_repo: UserRepository = Depends(get_user_repository_custom)
+    user_repo: UserRepository = Depends(get_user_repository)
 ):
     """사용자 조회"""
     user = await user_repo.get_user_by_id(user_id)
@@ -215,7 +203,7 @@ async def get_user(
 async def get_users(
     skip: int = 0,
     limit: int = 100,
-    user_repo: UserRepository = Depends(get_user_repository_custom)
+    user_repo: UserRepository = Depends(get_user_repository)
 ):
     """사용자 목록 조회"""
     return await user_repo.get_users(skip=skip, limit=limit)
@@ -225,7 +213,7 @@ async def get_users(
 async def update_user(
     user_id: int,
     user_update: UserUpdate,
-    user_repo: UserRepository = Depends(get_user_repository_custom)
+    user_repo: UserRepository = Depends(get_user_repository)
 ):
     """사용자 정보 업데이트"""
     user = await user_repo.update_user(user_id, user_update)
@@ -237,7 +225,7 @@ async def update_user(
 @app.delete("/users/{user_id}")
 async def delete_user(
     user_id: int,
-    user_repo: UserRepository = Depends(get_user_repository_custom)
+    user_repo: UserRepository = Depends(get_user_repository)
 ):
     """사용자 삭제"""
     success = await user_repo.delete_user(user_id)
@@ -248,7 +236,7 @@ async def delete_user(
 
 @app.get("/users/stats/active-count")
 async def get_active_users_count(
-    user_repo: UserRepository = Depends(get_user_repository_custom)
+    user_repo: UserRepository = Depends(get_user_repository)
 ):
     """활성 사용자 수 조회"""
     count = await user_repo.get_active_users_count()
@@ -259,7 +247,7 @@ async def get_active_users_count(
 @app.post("/users/batch/", response_model=List[User])
 async def create_users_batch(
     users_data: List[UserCreate],
-    pybatis: PyBatis = Depends(get_pybatis_custom)
+    pybatis: PyBatis = Depends(get_pybatis)
 ):
     """여러 사용자를 트랜잭션으로 일괄 생성"""
     created_users = []
@@ -285,7 +273,7 @@ async def create_users_batch(
 
 # 헬스 체크 엔드포인트
 @app.get("/health")
-async def health_check(pybatis: PyBatis = Depends(get_pybatis_custom)):
+async def health_check(pybatis: PyBatis = Depends(get_pybatis)):
     """애플리케이션 상태 확인"""
     try:
         # 간단한 쿼리로 데이터베이스 연결 확인
