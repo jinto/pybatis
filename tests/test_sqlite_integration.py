@@ -180,6 +180,132 @@ class TestSQLiteIntegration:
             # (실제 테스트에서는 연결이 이미 닫혔으므로 에러가 발생해야 함)
 
 
+class TestSQLitePydanticIntegration:
+    """SQLite와 Pydantic 모델 통합 테스트"""
+
+    @pytest.fixture
+    async def temp_db_with_users(self):
+        """사용자 데이터가 있는 임시 SQLite 데이터베이스 픽스처"""
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_file:
+            db_path = temp_file.name
+
+        dsn = f"sqlite:///{db_path}"
+
+        try:
+            db = PyBatis(dsn=dsn)
+            await db.connect()
+
+            # 테스트용 테이블 생성
+            await db.execute("""
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE
+                )
+            """)
+
+            # 테스트 데이터 삽입
+            await db.execute(
+                "INSERT INTO users (name, email, is_active) VALUES (:name, :email, :is_active)",
+                params={"name": "김철수", "email": "kim@example.com", "is_active": True},
+            )
+            await db.execute(
+                "INSERT INTO users (name, email, is_active) VALUES (:name, :email, :is_active)",
+                params={"name": "이영희", "email": "lee@example.com", "is_active": True},
+            )
+            await db.execute(
+                "INSERT INTO users (name, email, is_active) VALUES (:name, :email, :is_active)",
+                params={"name": "박민수", "email": "park@example.com", "is_active": False},
+            )
+
+            yield db
+
+        finally:
+            await db.close()
+            Path(db_path).unlink(missing_ok=True)
+
+    @pytest.mark.asyncio
+    async def test_fetch_one_to_pydantic_model(self, temp_db_with_users):
+        """SQLite에서 조회한 데이터를 Pydantic 모델로 변환 테스트"""
+        row = await temp_db_with_users.fetch_one(
+            "SELECT id, name, email, is_active FROM users WHERE name = :name",
+            params={"name": "김철수"},
+        )
+
+        assert row is not None
+
+        # 딕셔너리를 Pydantic 모델로 변환
+        # SQLite에서 boolean은 integer로 저장되므로 변환 필요
+        user_data = dict(row)
+        user_data["is_active"] = bool(user_data["is_active"])  # 1 -> True, 0 -> False
+        user = User(**user_data)
+
+        assert isinstance(user, User)
+        assert user.name == "김철수"
+        assert user.email == "kim@example.com"
+        assert user.is_active is True
+        assert user.id == 1
+
+    @pytest.mark.asyncio
+    async def test_fetch_all_to_pydantic_models(self, temp_db_with_users):
+        """SQLite에서 조회한 모든 데이터를 Pydantic 모델 리스트로 변환 테스트"""
+        rows = await temp_db_with_users.fetch_all(
+            "SELECT id, name, email, is_active FROM users WHERE is_active = :active",
+            params={"active": True},
+        )
+
+        assert len(rows) == 2
+
+        # 딕셔너리 리스트를 Pydantic 모델 리스트로 변환
+        users = []
+        for row in rows:
+            user_data = dict(row)
+            user_data["is_active"] = bool(user_data["is_active"])
+            users.append(User(**user_data))
+
+        assert len(users) == 2
+        assert all(isinstance(user, User) for user in users)
+        assert users[0].name == "김철수"
+        assert users[1].name == "이영희"
+        assert all(user.is_active for user in users)
+
+    @pytest.mark.asyncio
+    async def test_repository_pattern_with_sqlite(self, temp_db_with_users):
+        """SQLite를 사용한 Repository 패턴과 Pydantic 모델 통합 테스트"""
+        from tests.fixtures import UserRepository
+
+        repo = UserRepository(temp_db_with_users)
+
+        # 단일 사용자 조회
+        user = await repo.get_user_by_id(1)
+        assert isinstance(user, User)
+        assert user.name == "김철수"
+        assert user.email == "kim@example.com"
+        assert user.is_active is True
+
+        # 존재하지 않는 사용자 조회
+        user = await repo.get_user_by_id(999)
+        assert user is None
+
+        # 활성 사용자 목록 조회
+        active_users = await repo.get_users_by_activity(True)
+        assert len(active_users) == 2
+        assert all(isinstance(user, User) for user in active_users)
+        assert all(user.is_active for user in active_users)
+
+        # 비활성 사용자 목록 조회
+        inactive_users = await repo.get_users_by_activity(False)
+        assert len(inactive_users) == 1
+        assert isinstance(inactive_users[0], User)
+        assert inactive_users[0].name == "박민수"
+        assert inactive_users[0].is_active is False
+
+        # 활성 사용자 수 조회
+        count = await repo.count_active(True)
+        assert count == 2
+
+
 class TestSQLiteWithSqlLoader:
     """SQLite와 SQL 로더 통합 테스트"""
 

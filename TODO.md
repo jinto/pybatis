@@ -65,9 +65,6 @@
   - 실제 데이터베이스 통합 테스트 12개 통과 ✅
   - SQL 로더와 SQLite 통합 테스트 ✅
   - Repository 패턴과 SQLite 통합 테스트 ✅
-- [ ] 데이터베이스 드라이버 통합
-  - asyncpg (PostgreSQL) 지원
-  - aiomysql (MySQL) 지원
 - [ ] FastAPI 의존성 주입 통합
   - get_pybatis() 의존성 함수
   - 요청별 세션 관리
