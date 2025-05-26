@@ -32,13 +32,13 @@ class User(BaseModel):
     email: str
     is_active: bool = True
 
+    class Config:
+        # ORM 모드 활성화 (dict에서 직접 생성 가능)
+        from_attributes = True
 
-class UserCreate(BaseModel):
-    name: str
-    email: str
 
-
-class UserUpdate(BaseModel):
+class UserInput(BaseModel):
+    """사용자 입력용 모델 (생성/업데이트 공통)"""
     name: Optional[str] = None
     email: Optional[str] = None
     is_active: Optional[bool] = None
@@ -51,8 +51,12 @@ class UserRepository:
     def __init__(self, pybatis: PyBatis):
         self.pybatis = pybatis
 
-    async def create_user(self, user_data: UserCreate) -> User:
+    async def create_user(self, user_data: UserInput) -> User:
         """새 사용자 생성"""
+        # 생성 시 필수 필드 검증
+        if not user_data.name or not user_data.email:
+            raise ValueError("name과 email은 필수 필드입니다")
+
         user_id = await self.pybatis.execute(
             """
             INSERT INTO users (name, email, is_active)
@@ -61,7 +65,7 @@ class UserRepository:
             {
                 "name": user_data.name,
                 "email": user_data.email,
-                "is_active": True
+                "is_active": user_data.is_active if user_data.is_active is not None else True
             }
         )
 
@@ -95,9 +99,9 @@ class UserRepository:
 
         return [User(**user_dict) for user_dict in users_data]
 
-    async def update_user(self, user_id: int, user_update: UserUpdate) -> Optional[User]:
+    async def update_user(self, user_id: int, user_update: UserInput) -> Optional[User]:
         """사용자 정보 업데이트"""
-        # 업데이트할 필드만 추출
+        # 업데이트할 필드만 추출 (None 값 제외)
         update_data = {k: v for k, v in user_update.model_dump().items() if v is not None}
 
         if not update_data:
@@ -180,11 +184,21 @@ app = FastAPI(
 # API 엔드포인트 정의
 @app.post("/users/", response_model=User)
 async def create_user(
-    user_data: UserCreate,
+    user_data: UserInput,
     user_repo: UserRepository = Depends(get_user_repository)
 ):
     """새 사용자 생성"""
-    return await user_repo.create_user(user_data)
+    # 생성 시 필수 필드 검증
+    if not user_data.name or not user_data.email:
+        raise HTTPException(
+            status_code=400,
+            detail="name과 email은 필수 필드입니다"
+        )
+
+    try:
+        return await user_repo.create_user(user_data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/users/{user_id}", response_model=User)
@@ -212,7 +226,7 @@ async def get_users(
 @app.put("/users/{user_id}", response_model=User)
 async def update_user(
     user_id: int,
-    user_update: UserUpdate,
+    user_update: UserInput,
     user_repo: UserRepository = Depends(get_user_repository)
 ):
     """사용자 정보 업데이트"""
@@ -246,10 +260,18 @@ async def get_active_users_count(
 # 트랜잭션 사용 예제
 @app.post("/users/batch/", response_model=List[User])
 async def create_users_batch(
-    users_data: List[UserCreate],
+    users_data: List[UserInput],
     pybatis: PyBatis = Depends(get_pybatis)
 ):
     """여러 사용자를 트랜잭션으로 일괄 생성"""
+    # 모든 사용자 데이터의 필수 필드 검증
+    for i, user_data in enumerate(users_data):
+        if not user_data.name or not user_data.email:
+            raise HTTPException(
+                status_code=400,
+                detail=f"사용자 {i+1}번: name과 email은 필수 필드입니다"
+            )
+
     created_users = []
 
     try:
