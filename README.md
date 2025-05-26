@@ -131,10 +131,10 @@ async def read_all_users():
 
 pyBatis는 다음과 같은 핵심 컴포넌트로 구성됩니다:
 
-- **SqlSession**: 데이터베이스 연결과 트랜잭션을 관리
-- **PyBatisMapper**: SQL 실행과 결과 매핑을 담당
-- **데코레이터**: SQL 정의와 매핑을 위한 `@sql_query`, `@sql_update` 등
-- **의존성 주입**: FastAPI의 `Depends`를 활용한 세션 관리
+- **PyBatis**: 핵심 SQL 실행기 클래스
+- **Repository Pattern**: 도메인별 데이터 액세스 로직 캡슐화
+- **DSN 연결**: 데이터베이스 연결 문자열 기반 초기화
+- **비동기 지원**: async/await를 활용한 고성능 SQL 실행
 
 ## 🧪 개발 환경 설정
 
