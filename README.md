@@ -70,11 +70,12 @@ class UserRepository:
 
     async def create_user(self, name: str, email: str, is_active: bool = True) -> int:
         """새 사용자 생성"""
-        sql = """
-        INSERT INTO users (name, email, is_active)
-        VALUES (:name, :email, :is_active)
-        """
-        return await self.db.execute(sql, params={
+        return await self.db.execute(
+            """
+            INSERT INTO users (name, email, is_active)
+            VALUES (:name, :email, :is_active)
+            """
+            , params={
             "name": name,
             "email": email,
             "is_active": is_active
@@ -82,20 +83,35 @@ class UserRepository:
 
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
         """ID로 사용자 조회"""
-        sql = "SELECT id, name, email, is_active FROM users WHERE id = :user_id"
-        row = await self.db.fetch_one(sql, params={"user_id": user_id})
+        row = await self.db.fetch_one(
+            """
+            SELECT id, name, email, is_active
+            FROM users
+            WHERE id = :user_id
+            """
+            sql, params={"user_id": user_id})
         return User(**row) if row else None
 
     async def get_users_by_activity(self, active_status: bool) -> List[User]:
         """활성 상태에 따라 사용자 목록 조회"""
-        sql = "SELECT id, name, email, is_active FROM users WHERE is_active = :active_status"
-        rows = await self.db.fetch_all(sql, params={"active_status": active_status})
+        rows = await self.db.fetch_all(
+            """
+            SELECT id, name, email, is_active
+            FROM users
+            WHERE is_active = :active_status
+            """,
+            params={"active_status": active_status})
         return [User(**row) for row in rows]
 
     async def count_active(self, active: bool) -> int:
         """활성 사용자 수 조회"""
-        sql = "SELECT COUNT(*) FROM users WHERE is_active = :active"
-        return await self.db.fetch_val(sql, params={"active": active})
+        return await self.db.fetch_val(
+            """
+            SELECT COUNT(*)
+            FROM users
+            WHERE is_active = :active
+            """,
+            params={"active": active})
 ```
 
 ### 3. FastAPI와 통합 (기본)
