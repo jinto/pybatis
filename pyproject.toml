@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pybatis-neo"
-version = "0.1.1"
+version = "0.1.2"
 description = "MyBatis-style SQL Mapper for FastAPI - Modern and Pythonic Implementation"
 readme = "README.md"
 license = { text = "MIT" }
