@@ -5,6 +5,8 @@ README.md에서 제시한 API를 구현합니다.
 """
 
 import logging
+import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, List, Optional, Union
@@ -42,9 +44,168 @@ class PyBatis:
         self._db_type: Optional[str] = None  # 데이터베이스 타입 저장
         self._table_schemas: Dict[str, Dict[str, str]] = {}  # 테이블 스키마 캐시
 
+        # 쿼리 로깅 관련 속성
+        self._query_logging_enabled = False
+        self._query_logging_level = logging.INFO
+
+        # 쿼리 모니터링 관련 속성
+        self._query_monitoring_enabled = False
+        self._query_stats = None
+        self._slow_query_threshold = 1.0  # 기본 1초
+
         # SQL 디렉토리가 제공되면 SQL 로더 초기화
         if sql_dir:
             self.set_sql_loader_dir(sql_dir)
+
+    def enable_query_logging(self, level: int = logging.INFO) -> None:
+        """
+        쿼리 로깅을 활성화합니다.
+
+        Args:
+            level: 로깅 레벨 (기본값: logging.INFO)
+        """
+        self._query_logging_enabled = True
+        self._query_logging_level = level
+        logger.info("쿼리 로깅이 활성화되었습니다.")
+
+    def disable_query_logging(self) -> None:
+        """쿼리 로깅을 비활성화합니다."""
+        self._query_logging_enabled = False
+        logger.info("쿼리 로깅이 비활성화되었습니다.")
+
+    def enable_query_monitoring(self) -> None:
+        """쿼리 모니터링을 활성화합니다."""
+        self._query_monitoring_enabled = True
+        self._query_stats = {
+            "total_queries": 0,
+            "method_counts": defaultdict(int),
+            "execution_times": [],
+            "slow_queries": [],
+        }
+        logger.info("쿼리 모니터링이 활성화되었습니다.")
+
+    def disable_query_monitoring(self) -> None:
+        """쿼리 모니터링을 비활성화합니다."""
+        self._query_monitoring_enabled = False
+        self._query_stats = None
+        logger.info("쿼리 모니터링이 비활성화되었습니다.")
+
+    def get_query_stats(self) -> Optional[Dict[str, Any]]:
+        """
+        쿼리 통계를 반환합니다.
+
+        Returns:
+            쿼리 통계 딕셔너리 또는 None (모니터링이 비활성화된 경우)
+        """
+        if not self._query_monitoring_enabled or self._query_stats is None:
+            return None
+
+        # 통계 복사본 반환 (원본 보호)
+        return {
+            "total_queries": self._query_stats["total_queries"],
+            "method_counts": dict(self._query_stats["method_counts"]),
+            "execution_times": self._query_stats["execution_times"].copy(),
+            "slow_queries": self._query_stats["slow_queries"].copy(),
+            "average_execution_time": (
+                sum(self._query_stats["execution_times"]) / len(self._query_stats["execution_times"])
+                if self._query_stats["execution_times"] else 0
+            ),
+        }
+
+    def reset_query_stats(self) -> None:
+        """쿼리 통계를 초기화합니다."""
+        if self._query_monitoring_enabled and self._query_stats is not None:
+            self._query_stats = {
+                "total_queries": 0,
+                "method_counts": defaultdict(int),
+                "execution_times": [],
+                "slow_queries": [],
+            }
+            logger.info("쿼리 통계가 초기화되었습니다.")
+
+    def set_slow_query_threshold(self, threshold: float) -> None:
+        """
+        느린 쿼리 임계값을 설정합니다.
+
+        Args:
+            threshold: 임계값 (초 단위)
+        """
+        self._slow_query_threshold = threshold
+        logger.info(f"느린 쿼리 임계값이 {threshold}초로 설정되었습니다.")
+
+    def _log_query_execution(self, method: str, sql: str, params: Optional[Dict[str, Any]], execution_time: float) -> None:
+        """
+        쿼리 실행을 로깅합니다.
+
+        Args:
+            method: 실행된 메서드명
+            sql: 실행된 SQL 문
+            params: SQL 파라미터
+            execution_time: 실행 시간 (초)
+        """
+        if self._query_logging_enabled:
+            # SQL 문을 한 줄로 정리
+            clean_sql = " ".join(sql.split())
+
+            log_message = f"SQL 실행 ({method}): {clean_sql}"
+            if params:
+                log_message += f", params: {params}"
+            log_message += f", 실행 시간: {execution_time:.4f}초"
+
+            logger.log(self._query_logging_level, log_message)
+
+            # 느린 쿼리 경고
+            if execution_time > self._slow_query_threshold:
+                logger.warning(f"느린 쿼리 감지: {execution_time:.4f}초 (임계값: {self._slow_query_threshold}초) - {clean_sql}")
+
+    def _record_query_stats(self, method: str, sql: str, execution_time: float) -> None:
+        """
+        쿼리 통계를 기록합니다.
+
+        Args:
+            method: 실행된 메서드명
+            sql: 실행된 SQL 문
+            execution_time: 실행 시간 (초)
+        """
+        if self._query_monitoring_enabled and self._query_stats is not None:
+            self._query_stats["total_queries"] += 1
+            self._query_stats["method_counts"][method] += 1
+            self._query_stats["execution_times"].append(execution_time)
+
+            # 느린 쿼리 기록
+            if execution_time > self._slow_query_threshold:
+                clean_sql = " ".join(sql.split())
+                self._query_stats["slow_queries"].append({
+                    "sql": clean_sql,
+                    "execution_time": execution_time,
+                    "method": method,
+                    "timestamp": time.time(),
+                })
+
+    async def _execute_with_monitoring(self, method: str, sql: str, params: Optional[Dict[str, Any]], executor_func) -> Any:
+        """
+        모니터링과 함께 쿼리를 실행합니다.
+
+        Args:
+            method: 실행할 메서드명
+            sql: 실행할 SQL 문
+            params: SQL 파라미터
+            executor_func: 실제 실행할 함수
+
+        Returns:
+            쿼리 실행 결과
+        """
+        start_time = time.time()
+
+        try:
+            result = await executor_func()
+            return result
+        finally:
+            execution_time = time.time() - start_time
+
+            # 로깅 및 모니터링
+            self._log_query_execution(method, sql, params, execution_time)
+            self._record_query_stats(method, sql, execution_time)
 
     async def _get_table_schema(self, table_name: str) -> Dict[str, str]:
         """
@@ -283,16 +444,19 @@ class PyBatis:
         if self._connection is None:
             raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
 
-        logger.debug(f"SQL 실행 (fetch_val): {sql}, params: {params}")
+        async def executor():
+            logger.debug(f"SQL 실행 (fetch_val): {sql}, params: {params}")
 
-        # aiosqlite 연결인 경우 (aiosqlite.Connection 타입 체크)
-        if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
-            async with self._connection.execute(sql, params or {}) as cursor:
-                row = await cursor.fetchone()
-                return row[0] if row else None
-        else:
-            # 테스트용 MockConnection
-            return await self._connection.fetchval(sql, params)
+            # aiosqlite 연결인 경우 (aiosqlite.Connection 타입 체크)
+            if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
+                async with self._connection.execute(sql, params or {}) as cursor:
+                    row = await cursor.fetchone()
+                    return row[0] if row else None
+            else:
+                # 테스트용 MockConnection
+                return await self._connection.fetchval(sql, params)
+
+        return await self._execute_with_monitoring("fetch_val", sql, params, executor)
 
     async def fetch_one(
         self, sql: str, params: Optional[Dict[str, Any]] = None
@@ -310,26 +474,29 @@ class PyBatis:
         if self._connection is None:
             raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
 
-        logger.debug(f"SQL 실행 (fetch_one): {sql}, params: {params}")
+        async def executor():
+            logger.debug(f"SQL 실행 (fetch_one): {sql}, params: {params}")
 
-        # SQL에서 테이블명 추출
-        table_name = await self._extract_table_name_from_sql(sql)
+            # SQL에서 테이블명 추출
+            table_name = await self._extract_table_name_from_sql(sql)
 
-        # aiosqlite 연결인 경우
-        if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
-            async with self._connection.execute(sql, params or {}) as cursor:
-                row = await cursor.fetchone()
+            # aiosqlite 연결인 경우
+            if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
+                async with self._connection.execute(sql, params or {}) as cursor:
+                    row = await cursor.fetchone()
+                    if row is None:
+                        return None
+                    row_data = dict(row)
+                    return await self._convert_row_data_with_schema(row_data, table_name)
+            else:
+                # 테스트용 MockConnection
+                row = await self._connection.fetchrow(sql, params)
                 if row is None:
                     return None
                 row_data = dict(row)
                 return await self._convert_row_data_with_schema(row_data, table_name)
-        else:
-            # 테스트용 MockConnection
-            row = await self._connection.fetchrow(sql, params)
-            if row is None:
-                return None
-            row_data = dict(row)
-            return await self._convert_row_data_with_schema(row_data, table_name)
+
+        return await self._execute_with_monitoring("fetch_one", sql, params, executor)
 
     async def fetch_all(
         self, sql: str, params: Optional[Dict[str, Any]] = None
@@ -347,22 +514,25 @@ class PyBatis:
         if self._connection is None:
             raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
 
-        logger.debug(f"SQL 실행 (fetch_all): {sql}, params: {params}")
+        async def executor():
+            logger.debug(f"SQL 실행 (fetch_all): {sql}, params: {params}")
 
-        # SQL에서 테이블명 추출
-        table_name = await self._extract_table_name_from_sql(sql)
+            # SQL에서 테이블명 추출
+            table_name = await self._extract_table_name_from_sql(sql)
 
-        # aiosqlite 연결인 경우
-        if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
-            async with self._connection.execute(sql, params or {}) as cursor:
-                rows = await cursor.fetchall()
+            # aiosqlite 연결인 경우
+            if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
+                async with self._connection.execute(sql, params or {}) as cursor:
+                    rows = await cursor.fetchall()
+                    rows_data = [dict(row) for row in rows]
+                    return await self._convert_rows_data_with_schema(rows_data, table_name)
+            else:
+                # 테스트용 MockConnection
+                rows = await self._connection.fetch(sql, params)
                 rows_data = [dict(row) for row in rows]
                 return await self._convert_rows_data_with_schema(rows_data, table_name)
-        else:
-            # 테스트용 MockConnection
-            rows = await self._connection.fetch(sql, params)
-            rows_data = [dict(row) for row in rows]
-            return await self._convert_rows_data_with_schema(rows_data, table_name)
+
+        return await self._execute_with_monitoring("fetch_all", sql, params, executor)
 
     async def execute(self, sql: str, params: Optional[Dict[str, Any]] = None) -> Any:
         """
@@ -378,16 +548,19 @@ class PyBatis:
         if self._connection is None:
             raise RuntimeError("데이터베이스에 연결되지 않았습니다.")
 
-        logger.debug(f"SQL 실행 (execute): {sql}, params: {params}")
+        async def executor():
+            logger.debug(f"SQL 실행 (execute): {sql}, params: {params}")
 
-        # aiosqlite 연결인 경우
-        if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
-            async with self._connection.execute(sql, params or {}) as cursor:
-                # SQLite는 lastrowid (INSERT의 경우) 또는 rowcount (UPDATE/DELETE의 경우) 반환
-                return cursor.lastrowid or cursor.rowcount
-        else:
-            # 테스트용 MockConnection
-            return await self._connection.execute(sql, params)
+            # aiosqlite 연결인 경우
+            if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
+                async with self._connection.execute(sql, params or {}) as cursor:
+                    # SQLite는 lastrowid (INSERT의 경우) 또는 rowcount (UPDATE/DELETE의 경우) 반환
+                    return cursor.lastrowid or cursor.rowcount
+            else:
+                # 테스트용 MockConnection
+                return await self._connection.execute(sql, params)
+
+        return await self._execute_with_monitoring("execute", sql, params, executor)
 
     async def close(self) -> None:
         """
@@ -428,18 +601,29 @@ class PyBatis:
         if hasattr(self._connection, 'execute') and hasattr(self._connection, 'row_factory'):
             # SQLite는 기본적으로 autocommit이 비활성화되어 있음
             # 트랜잭션 시작
+            if self._query_logging_enabled:
+                logger.log(self._query_logging_level, "트랜잭션 시작")
+
             await self._connection.execute("BEGIN")
             try:
                 yield self
                 # 정상 완료 시 커밋
                 await self._connection.commit()
+                if self._query_logging_enabled:
+                    logger.log(self._query_logging_level, "트랜잭션 커밋")
             except Exception:
                 # 예외 발생 시 롤백
                 await self._connection.rollback()
+                if self._query_logging_enabled:
+                    logger.log(self._query_logging_level, "트랜잭션 롤백")
                 raise
         else:
             # 테스트용 MockConnection - 단순히 self 반환
+            if self._query_logging_enabled:
+                logger.log(self._query_logging_level, "트랜잭션 시작 (MockConnection)")
             yield self
+            if self._query_logging_enabled:
+                logger.log(self._query_logging_level, "트랜잭션 완료 (MockConnection)")
 
     async def __aenter__(self) -> "PyBatis":
         """비동기 컨텍스트 매니저 진입"""

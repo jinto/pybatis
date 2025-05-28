@@ -73,6 +73,7 @@ class UserRepository:
 
         return User(**user_dict)
 
+    @query("SELECT * FROM users WHERE id = :id")
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
         """ID로 사용자 조회"""
         user_dict = await self.pybatis.fetch_one(
