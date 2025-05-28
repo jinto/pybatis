@@ -73,8 +73,8 @@ class UserRepository:
             """
             INSERT INTO users (name, email, is_active)
             VALUES (:name, :email, :is_active)
-            """
-            , params={
+            """,
+            params={
             "name": name,
             "email": email,
             "is_active": is_active})
@@ -85,8 +85,8 @@ class UserRepository:
             SELECT id, name, email, is_active
             FROM users
             WHERE id = :user_id
-            """
-            sql, params={"user_id": user_id})
+            """,
+            params={"user_id": user_id})
         return User(**row) if row else None
 
     async def get_users_by_activity(self, active_status: bool) -> List[User]:
