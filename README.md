@@ -69,7 +69,6 @@ class UserRepository:
         self.db = db
 
     async def create_user(self, name: str, email: str, is_active: bool = True) -> int:
-        """새 사용자 생성"""
         return await self.db.execute(
             """
             INSERT INTO users (name, email, is_active)
@@ -78,11 +77,9 @@ class UserRepository:
             , params={
             "name": name,
             "email": email,
-            "is_active": is_active
-        })
+            "is_active": is_active})
 
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
-        """ID로 사용자 조회"""
         row = await self.db.fetch_one(
             """
             SELECT id, name, email, is_active
@@ -93,7 +90,6 @@ class UserRepository:
         return User(**row) if row else None
 
     async def get_users_by_activity(self, active_status: bool) -> List[User]:
-        """활성 상태에 따라 사용자 목록 조회"""
         rows = await self.db.fetch_all(
             """
             SELECT id, name, email, is_active
@@ -104,7 +100,6 @@ class UserRepository:
         return [User(**row) for row in rows]
 
     async def count_active(self, active: bool) -> int:
-        """활성 사용자 수 조회"""
         return await self.db.fetch_val(
             """
             SELECT COUNT(*)
