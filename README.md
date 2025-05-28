@@ -240,8 +240,8 @@ To develop the project locally:
 
 ```bash
 # Clone repository
-git clone https://github.com/pybatis/pybatis-neo.git
-cd pybatis-neo
+git clone https://github.com/jinto/pybatis.git
+cd pybatis
 
 # Create virtual environment (using uv)
 uv venv
@@ -302,8 +302,8 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## 🔗 Links
 
 - [Documentation](https://pybatis-neo.readthedocs.io)
-- [GitHub Repository](https://github.com/pybatis/pybatis-neo)
-- [Issue Tracker](https://github.com/pybatis/pybatis-neo/issues)
+- [GitHub Repository](https://github.com/jinto/pybatis)
+- [Issue Tracker](https://github.com/jinto/pybatis/issues)
 - [PyPI](https://pypi.org/project/pybatis-neo/)
 - [Changelog](CHANGELOG.md)
 

@@ -5,16 +5,16 @@ build-backend = "hatchling.build"
 [project]
 name = "pybatis-neo"
 version = "0.1.0"
-description = "FastAPI를 위한 MyBatis 스타일의 SQL 매퍼 - 현대적이고 Pythonic한 구현"
+description = "MyBatis-style SQL Mapper for FastAPI - Modern and Pythonic Implementation"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
-    { name = "pyBatis Neo Contributors", email = "pybatis.neo@example.com" },
+    { name = "jinto", email = "jinto@example.com" }
 ]
 maintainers = [
     { name = "pyBatis Neo Contributors", email = "pybatis.neo@example.com" },
 ]
-keywords = ["fastapi", "sql", "mapper", "database", "async", "mybatis", "pydantic"]
+keywords = ["fastapi", "sql", "mapper", "mybatis", "async", "pydantic"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -62,10 +62,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pybatis/pybatis-neo"
+Homepage = "https://github.com/jinto/pybatis"
 Documentation = "https://pybatis-neo.readthedocs.io"
-Repository = "https://github.com/pybatis/pybatis-neo"
-Issues = "https://github.com/pybatis/pybatis-neo/issues"
+Repository = "https://github.com/jinto/pybatis"
+Issues = "https://github.com/jinto/pybatis/issues"
 Changelog = "https://github.com/pybatis/pybatis-neo/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.sdist]

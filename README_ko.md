@@ -240,8 +240,8 @@ pyBatis Neo는 다음과 같은 핵심 컴포넌트로 구성됩니다:
 
 ```bash
 # 저장소 클론
-git clone https://github.com/pybatis/pybatis-neo.git
-cd pybatis-neo
+git clone https://github.com/jinto/pybatis.git
+cd pybatis
 
 # 가상환경 생성 (uv 사용)
 uv venv
@@ -302,8 +302,8 @@ pyBatis Neo는 오픈소스 프로젝트입니다. 기여를 환영합니다!
 ## 🔗 링크
 
 - [문서](https://pybatis-neo.readthedocs.io)
-- [GitHub 저장소](https://github.com/pybatis/pybatis-neo)
-- [이슈 트래커](https://github.com/pybatis/pybatis-neo/issues)
+- [GitHub 저장소](https://github.com/jinto/pybatis)
+- [이슈 트래커](https://github.com/jinto/pybatis/issues)
 - [PyPI](https://pypi.org/project/pybatis-neo/)
 - [변경 이력](CHANGELOG.md)
 
