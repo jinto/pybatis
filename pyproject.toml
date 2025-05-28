@@ -9,10 +9,10 @@ description = "MyBatis-style SQL Mapper for FastAPI - Modern and Pythonic Implem
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
-    { name = "jinto", email = "jinto@example.com" }
+    { name = "jinto", email = "jaypark@gmail.com" }
 ]
 maintainers = [
-    { name = "pyBatis Neo Contributors", email = "pybatis.neo@example.com" },
+    { name = "pyBatis Contributors", email = "jaypark@gmail.com" },
 ]
 keywords = ["fastapi", "sql", "mapper", "mybatis", "async", "pydantic"]
 classifiers = [
@@ -66,7 +66,7 @@ Homepage = "https://github.com/jinto/pybatis"
 Documentation = "https://pybatis-neo.readthedocs.io"
 Repository = "https://github.com/jinto/pybatis"
 Issues = "https://github.com/jinto/pybatis/issues"
-Changelog = "https://github.com/pybatis/pybatis-neo/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/pybatis/pybatis/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.sdist]
 include = [
