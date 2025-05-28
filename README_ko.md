@@ -1,39 +1,39 @@
 # 🐍 pyBatis Neo
 
-**MyBatis-style SQL Mapper for FastAPI - Modern and Pythonic Implementation**
+**FastAPI를 위한 MyBatis 스타일의 SQL 매퍼 - 현대적이고 Pythonic한 구현**
 
 [![PyPI version](https://badge.fury.io/py/pybatis-neo.svg)](https://badge.fury.io/py/pybatis-neo)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[한국어 README](README_ko.md) | [Documentation](https://pybatis-neo.readthedocs.io) | [PyPI](https://pypi.org/project/pybatis-neo/)
+[English README](README.md) | [문서](https://pybatis-neo.readthedocs.io) | [PyPI](https://pypi.org/project/pybatis-neo/)
 
-pyBatis Neo is an open-source SQL mapper library for FastAPI backend developers. Inspired by Java's MyBatis, it allows you to write SQL explicitly without XML, separating business logic from data access logic with a modern, Pythonic approach.
+pyBatis Neo는 FastAPI 백엔드 개발자를 위한 오픈소스 SQL 매퍼 라이브러리입니다. Java의 MyBatis에서 영감을 받아, XML 없이도 SQL을 명시적으로 작성하고, 비즈니스 로직과 분리하여 관리할 수 있도록 설계되었습니다.
 
-## ✨ Key Features
+## ✨ 주요 특징
 
-- 🚀 **Perfect FastAPI Integration**: Seamlessly integrates with FastAPI's dependency injection system
-- 🔄 **Async Support**: High-performance asynchronous SQL execution with async/await
-- 🎯 **Pydantic Model Mapping**: Automatic mapping of SQL query results to Pydantic models
-- 🐍 **Pythonic Configuration**: Uses decorators and function annotations instead of XML
-- 🔒 **SQL Injection Prevention**: Safe parameter binding
-- 🧪 **Test-Friendly**: Easy testing with mocking and dependency injection
-- 📊 **Query Monitoring**: Execution time measurement and performance monitoring
-- 📁 **SQL File Loader**: Load SQL statements from external .sql files
+- 🚀 **FastAPI 완벽 통합**: FastAPI의 의존성 주입 시스템과 자연스럽게 통합
+- 🔄 **비동기 지원**: async/await를 활용한 고성능 비동기 SQL 실행
+- 🎯 **Pydantic 모델 매핑**: SQL 쿼리 결과를 자동으로 Pydantic 모델로 변환
+- 🐍 **Pythonic한 구성**: XML 대신 데코레이터와 함수 주석을 활용
+- 🔒 **SQL 인젝션 방지**: 안전한 파라미터 바인딩
+- 🧪 **테스트 친화적**: 모킹 및 의존성 주입을 통한 쉬운 테스트
+- 📊 **쿼리 모니터링**: 실행 시간 측정 및 성능 모니터링
+- 📁 **SQL 파일 로더**: 외부 .sql 파일에서 SQL 문 로드
 
-## 📋 Requirements
+## 📋 요구사항
 
-- **Python 3.11+**
-- FastAPI 0.104.0+
-- Pydantic 2.0.0+
+- **Python 3.11 이상**
+- FastAPI 0.104.0 이상
+- Pydantic 2.0.0 이상
 
-## 📦 Installation
+## 📦 설치
 
 ```bash
 pip install pybatis-neo
 ```
 
-### Database Driver Installation
+### 데이터베이스 드라이버 설치
 
 ```bash
 # PostgreSQL
@@ -45,13 +45,13 @@ pip install pybatis-neo[mysql]
 # SQLite
 pip install pybatis-neo[sqlite]
 
-# All drivers
+# 모든 드라이버
 pip install pybatis-neo[all]
 ```
 
-## 🚀 Quick Start
+## 🚀 빠른 시작
 
-### 1. Define Models
+### 1. 모델 정의
 
 ```python
 from pydantic import BaseModel
@@ -63,7 +63,7 @@ class User(BaseModel):
     is_active: bool
 ```
 
-### 2. Create Repository Class
+### 2. Repository 클래스 생성
 
 ```python
 from typing import Optional, List
@@ -75,7 +75,7 @@ class UserRepository:
         self.db = db
 
     async def create_user(self, name: str, email: str, is_active: bool = True) -> int:
-        """Create a new user"""
+        """새 사용자 생성"""
         sql = """
         INSERT INTO users (name, email, is_active)
         VALUES (:name, :email, :is_active)
@@ -87,24 +87,24 @@ class UserRepository:
         })
 
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
-        """Get user by ID"""
+        """ID로 사용자 조회"""
         sql = "SELECT id, name, email, is_active FROM users WHERE id = :user_id"
         row = await self.db.fetch_one(sql, params={"user_id": user_id})
         return User(**row) if row else None
 
     async def get_users_by_activity(self, active_status: bool) -> List[User]:
-        """Get users by activity status"""
+        """활성 상태에 따라 사용자 목록 조회"""
         sql = "SELECT id, name, email, is_active FROM users WHERE is_active = :active_status"
         rows = await self.db.fetch_all(sql, params={"active_status": active_status})
         return [User(**row) for row in rows]
 
     async def count_active(self, active: bool) -> int:
-        """Count active users"""
+        """활성 사용자 수 조회"""
         sql = "SELECT COUNT(*) FROM users WHERE is_active = :active"
         return await self.db.fetch_val(sql, params={"active": active})
 ```
 
-### 3. FastAPI Integration (Basic)
+### 3. FastAPI와 통합 (기본)
 
 ```python
 from fastapi import FastAPI, HTTPException
@@ -112,7 +112,7 @@ from pybatis import PyBatis
 
 app = FastAPI()
 
-# Simple usage
+# 간단한 사용법
 @app.on_event("startup")
 async def startup():
     global db
@@ -128,7 +128,7 @@ async def get_user(user_id: int):
     return user
 ```
 
-### 4. FastAPI Integration (Advanced - Dependency Injection)
+### 4. FastAPI와 통합 (고급 - 의존성 주입)
 
 ```python
 from contextlib import asynccontextmanager
@@ -136,18 +136,18 @@ from fastapi import FastAPI, Depends, HTTPException
 from pybatis import PyBatis
 from pybatis.fastapi import PyBatisManager, create_pybatis_dependency
 
-# PyBatis manager setup
+# PyBatis 매니저 설정
 manager = PyBatisManager(dsn="sqlite:///example.db")
 get_pybatis = create_pybatis_dependency(manager)
 
-# Repository dependency function
+# Repository 의존성 함수
 async def get_user_repository(pybatis: PyBatis = Depends(get_pybatis)) -> UserRepository:
     return UserRepository(pybatis)
 
-# Application lifecycle management
+# 애플리케이션 생명주기 관리
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Create database tables
+    # 시작 시: 테이블 생성
     async with manager.get_pybatis() as pybatis:
         await pybatis.execute("""
             CREATE TABLE IF NOT EXISTS users (
@@ -158,7 +158,7 @@ async def lifespan(app: FastAPI):
             )
         """)
     yield
-    # Shutdown: Clean up resources
+    # 종료 시: 리소스 정리
     await manager.close()
 
 app = FastAPI(lifespan=lifespan)
@@ -181,132 +181,132 @@ async def active_users_count(
     return {"active_user_count": count}
 ```
 
-## 🔧 Advanced Features
+## 🔧 고급 기능
 
-### Query Logging and Monitoring
+### 쿼리 로깅 및 모니터링
 
 ```python
 import logging
 
-# Enable query logging
+# 쿼리 로깅 활성화
 db.enable_query_logging(level=logging.INFO)
 
-# Enable query monitoring
+# 쿼리 모니터링 활성화
 db.enable_query_monitoring()
 
-# Set slow query threshold (1 second)
+# 느린 쿼리 임계값 설정 (1초)
 db.set_slow_query_threshold(1.0)
 
-# Get statistics
+# 통계 조회
 stats = db.get_query_stats()
-print(f"Total queries: {stats['total_queries']}")
-print(f"Average execution time: {stats['average_execution_time']:.4f}s")
+print(f"총 쿼리 수: {stats['total_queries']}")
+print(f"평균 실행 시간: {stats['average_execution_time']:.4f}초")
 ```
 
-### Transaction Management
+### 트랜잭션 관리
 
 ```python
-# Using transaction context manager
+# 트랜잭션 컨텍스트 매니저 사용
 async with db.transaction() as tx:
-    await tx.execute("INSERT INTO users (name) VALUES (:name)", {"name": "User1"})
+    await tx.execute("INSERT INTO users (name) VALUES (:name)", {"name": "사용자1"})
     await tx.execute("INSERT INTO profiles (user_id) VALUES (:user_id)", {"user_id": 1})
-    # Auto-commit (auto-rollback on exception)
+    # 자동 커밋 (예외 발생 시 자동 롤백)
 ```
 
-### SQL File Loader
+### SQL 파일 로더
 
 ```python
-# Set SQL directory
+# SQL 디렉토리 설정
 db.set_sql_loader_dir("sql/")
 
-# Load from SQL file
+# SQL 파일에서 로드
 sql = db.load_sql("users.sql", "get_active_users")
 users = await db.fetch_all(sql, {"active": True})
 ```
 
-## 🏗️ Architecture
+## 🏗️ 아키텍처
 
-pyBatis Neo consists of the following core components:
+pyBatis Neo는 다음과 같은 핵심 컴포넌트로 구성됩니다:
 
-- **PyBatis**: Core SQL execution engine class
-- **Repository Pattern**: Encapsulates domain-specific data access logic
-- **DSN Connection**: Database connection string-based initialization
-- **Async Support**: High-performance SQL execution with async/await
-- **FastAPI Integration**: Dependency injection and lifecycle management
+- **PyBatis**: 핵심 SQL 실행기 클래스
+- **Repository Pattern**: 도메인별 데이터 액세스 로직 캡슐화
+- **DSN 연결**: 데이터베이스 연결 문자열 기반 초기화
+- **비동기 지원**: async/await를 활용한 고성능 SQL 실행
+- **FastAPI 통합**: 의존성 주입 및 생명주기 관리
 
-## 🧪 Development Setup
+## 🧪 개발 환경 설정
 
-To develop the project locally:
+프로젝트를 로컬에서 개발하려면:
 
 ```bash
-# Clone repository
+# 저장소 클론
 git clone https://github.com/pybatis/pybatis-neo.git
 cd pybatis-neo
 
-# Create virtual environment (using uv)
+# 가상환경 생성 (uv 사용)
 uv venv
 source .venv/bin/activate
 
-# Install development dependencies
+# 개발 의존성 설치
 uv pip install -e ".[dev]"
 
-# Run tests
+# 테스트 실행
 uv run pytest
 
-# Code formatting
+# 코드 포맷팅
 black src tests
 isort src tests
 
-# Type checking
+# 타입 체크
 mypy src
 
-# Run sample code
+# 샘플 코드 실행
 python samples/demo_sqlite_pydantic.py
 python samples/fastapi_example.py
 ```
 
-## 📊 Testing
+## 📊 테스트
 
 ```bash
-# Run all tests
+# 모든 테스트 실행
 uv run pytest
 
-# Run tests with coverage
+# 커버리지 포함 테스트
 uv run pytest --cov=pybatis --cov-report=html
 
-# Run specific test file
+# 특정 테스트 파일 실행
 uv run pytest tests/test_pybatis.py
 ```
 
-## 📚 Sample Code
+## 📚 샘플 코드
 
-Check out various usage examples in the `samples/` directory:
+`samples/` 디렉토리에서 다양한 사용 예제를 확인할 수 있습니다:
 
-- `demo_sqlite_pydantic.py`: SQLite and Pydantic model integration demo
-- `fastapi_example.py`: Complete FastAPI integration example
+- `demo_sqlite_pydantic.py`: SQLite와 Pydantic 모델 연동 데모
+- `fastapi_example.py`: FastAPI 완전 통합 예제
 
-## 🤝 Contributing
+## 🤝 기여하기
 
-pyBatis Neo is an open-source project. Contributions are welcome!
+pyBatis Neo는 오픈소스 프로젝트입니다. 기여를 환영합니다!
 
-1. Check existing issues or create a new issue
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Create a Pull Request
+1. 이슈를 확인하거나 새로운 이슈를 생성하세요
+2. 피처 브랜치를 생성하세요 (`git checkout -b feature/amazing-feature`)
+3. 변경사항을 커밋하세요 (`git commit -m 'Add amazing feature'`)
+4. 브랜치에 푸시하세요 (`git push origin feature/amazing-feature`)
+5. Pull Request를 생성하세요
 
-## 📝 License
+## 📝 라이선스
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+이 프로젝트는 MIT 라이선스 하에 있습니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
-## 🔗 Links
+## 🔗 링크
 
-- [Documentation](https://pybatis-neo.readthedocs.io)
-- [GitHub Repository](https://github.com/pybatis/pybatis-neo)
-- [Issue Tracker](https://github.com/pybatis/pybatis-neo/issues)
+- [문서](https://pybatis-neo.readthedocs.io)
+- [GitHub 저장소](https://github.com/pybatis/pybatis-neo)
+- [이슈 트래커](https://github.com/pybatis/pybatis-neo/issues)
 - [PyPI](https://pypi.org/project/pybatis-neo/)
-- [Changelog](CHANGELOG.md)
+- [변경 이력](CHANGELOG.md)
 
 ---
 
-**Write clean and maintainable SQL code in FastAPI with pyBatis Neo! 🚀**
+**pyBatis Neo와 함께 FastAPI에서 깔끔하고 유지보수하기 쉬운 SQL 코드를 작성해보세요! 🚀**
