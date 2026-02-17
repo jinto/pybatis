@@ -55,5 +55,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 비동기 I/O 기반 고성능
 - SOLID 원칙 및 Clean Architecture 준수
 
-[Unreleased]: https://github.com/pybatis/pybatis/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/pybatis/pybatis/releases/tag/v0.1.0
+[Unreleased]: https://github.com/jinto/pybatis/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/jinto/pybatis/releases/tag/v0.1.0

@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pybatis-neo"
-version = "0.1.2"
-description = "MyBatis-style SQL Mapper for FastAPI - Modern and Pythonic Implementation"
+name = "pybatis"
+version = "0.1.3"
+description = "MyBatis-style SQL Mapper for FastAPI - Modern and Pythonic"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -58,15 +58,15 @@ sqlite = [
     "aiosqlite>=0.19.0",
 ]
 all = [
-    "pybatis-neo[postgres,mysql,sqlite]",
+    "pybatis[postgres,mysql,sqlite]",
 ]
 
 [project.urls]
 Homepage = "https://github.com/jinto/pybatis"
-Documentation = "https://pybatis-neo.readthedocs.io"
+Documentation = "https://github.com/jinto/pybatis#readme"
 Repository = "https://github.com/jinto/pybatis"
 Issues = "https://github.com/jinto/pybatis/issues"
-Changelog = "https://github.com/pybatis/pybatis/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/jinto/pybatis/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.sdist]
 include = [

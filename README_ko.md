@@ -1,14 +1,14 @@
-# 🐍 pyBatis Neo
+# 🐍 pyBatis
 
 **FastAPI를 위한 MyBatis 스타일의 SQL 매퍼 - 현대적이고 Pythonic한 구현**
 
-[![PyPI version](https://badge.fury.io/py/pybatis-neo.svg)](https://badge.fury.io/py/pybatis-neo)
+[![PyPI version](https://badge.fury.io/py/pybatis.svg)](https://badge.fury.io/py/pybatis)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[English README](README.md) | [문서](https://pybatis-neo.readthedocs.io) | [PyPI](https://pypi.org/project/pybatis-neo/)
+[English README](README.md) | [문서](https://github.com/jinto/pybatis#readme) | [PyPI](https://pypi.org/project/pybatis/)
 
-pyBatis Neo는 FastAPI 백엔드 개발자를 위한 오픈소스 SQL 매퍼 라이브러리입니다. Java의 MyBatis에서 영감을 받아, XML 없이도 SQL을 명시적으로 작성하고, 비즈니스 로직과 분리하여 관리할 수 있도록 설계되었습니다.
+pyBatis는 FastAPI 백엔드 개발자를 위한 오픈소스 SQL 매퍼 라이브러리입니다. Java의 MyBatis에서 영감을 받아, XML 없이도 SQL을 명시적으로 작성하고, 비즈니스 로직과 분리하여 관리할 수 있도록 설계되었습니다.
 
 ## ✨ 주요 특징
 
@@ -30,23 +30,23 @@ pyBatis Neo는 FastAPI 백엔드 개발자를 위한 오픈소스 SQL 매퍼 라
 ## 📦 설치
 
 ```bash
-pip install pybatis-neo
+pip install pybatis
 ```
 
 ### 데이터베이스 드라이버 설치
 
 ```bash
 # PostgreSQL
-pip install pybatis-neo[postgres]
+pip install pybatis[postgres]
 
 # MySQL
-pip install pybatis-neo[mysql]
+pip install pybatis[mysql]
 
 # SQLite
-pip install pybatis-neo[sqlite]
+pip install pybatis[sqlite]
 
 # 모든 드라이버
-pip install pybatis-neo[all]
+pip install pybatis[all]
 ```
 
 ## 🚀 빠른 시작
@@ -226,7 +226,7 @@ users = await db.fetch_all(sql, {"active": True})
 
 ## 🏗️ 아키텍처
 
-pyBatis Neo는 다음과 같은 핵심 컴포넌트로 구성됩니다:
+pyBatis는 다음과 같은 핵심 컴포넌트로 구성됩니다:
 
 - **PyBatis**: 핵심 SQL 실행기 클래스
 - **Repository Pattern**: 도메인별 데이터 액세스 로직 캡슐화
@@ -287,7 +287,7 @@ uv run pytest tests/test_pybatis.py
 
 ## 🤝 기여하기
 
-pyBatis Neo는 오픈소스 프로젝트입니다. 기여를 환영합니다!
+pyBatis는 오픈소스 프로젝트입니다. 기여를 환영합니다!
 
 1. 이슈를 확인하거나 새로운 이슈를 생성하세요
 2. 피처 브랜치를 생성하세요 (`git checkout -b feature/amazing-feature`)
@@ -301,12 +301,12 @@ pyBatis Neo는 오픈소스 프로젝트입니다. 기여를 환영합니다!
 
 ## 🔗 링크
 
-- [문서](https://pybatis-neo.readthedocs.io)
+- [문서](https://github.com/jinto/pybatis#readme)
 - [GitHub 저장소](https://github.com/jinto/pybatis)
 - [이슈 트래커](https://github.com/jinto/pybatis/issues)
-- [PyPI](https://pypi.org/project/pybatis-neo/)
+- [PyPI](https://pypi.org/project/pybatis/)
 - [변경 이력](CHANGELOG.md)
 
 ---
 
-**pyBatis Neo와 함께 FastAPI에서 깔끔하고 유지보수하기 쉬운 SQL 코드를 작성해보세요! 🚀**
+**pyBatis와 함께 FastAPI에서 깔끔하고 유지보수하기 쉬운 SQL 코드를 작성해보세요! 🚀**

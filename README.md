@@ -1,14 +1,14 @@
-# 🐍 pyBatis Neo
+# 🐍 pyBatis
 
 **MyBatis-style SQL Mapper for FastAPI - Modern and Pythonic Implementation**
 
-[![PyPI version](https://badge.fury.io/py/pybatis-neo.svg)](https://badge.fury.io/py/pybatis-neo)
+[![PyPI version](https://badge.fury.io/py/pybatis.svg)](https://badge.fury.io/py/pybatis)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[한국어 README](README_ko.md) | [Documentation](https://pybatis-neo.readthedocs.io) | [PyPI](https://pypi.org/project/pybatis-neo/)
+[한국어 README](README_ko.md) | [Documentation](https://github.com/jinto/pybatis#readme) | [PyPI](https://pypi.org/project/pybatis/)
 
-pyBatis Neo is an open-source SQL mapper library for FastAPI backend developers. Inspired by Java's MyBatis, it allows you to write SQL explicitly without XML, separating business logic from data access logic with a modern, Pythonic approach.
+pyBatis is an open-source SQL mapper library for FastAPI backend developers. Inspired by Java's MyBatis, it allows you to write SQL explicitly without XML, separating business logic from data access logic with a modern, Pythonic approach.
 
 ## ✨ Key Features
 
@@ -30,23 +30,23 @@ pyBatis Neo is an open-source SQL mapper library for FastAPI backend developers.
 ## 📦 Installation
 
 ```bash
-pip install pybatis-neo
+pip install pybatis
 ```
 
 ### Database Driver Installation
 
 ```bash
 # PostgreSQL
-pip install pybatis-neo[postgres]
+pip install pybatis[postgres]
 
 # MySQL
-pip install pybatis-neo[mysql]
+pip install pybatis[mysql]
 
 # SQLite
-pip install pybatis-neo[sqlite]
+pip install pybatis[sqlite]
 
 # All drivers
-pip install pybatis-neo[all]
+pip install pybatis[all]
 ```
 
 ## 🚀 Quick Start
@@ -226,7 +226,7 @@ users = await db.fetch_all(sql, {"active": True})
 
 ## 🏗️ Architecture
 
-pyBatis Neo consists of the following core components:
+pyBatis consists of the following core components:
 
 - **PyBatis**: Core SQL execution engine class
 - **Repository Pattern**: Encapsulates domain-specific data access logic
@@ -287,7 +287,7 @@ Check out various usage examples in the `samples/` directory:
 
 ## 🤝 Contributing
 
-pyBatis Neo is an open-source project. Contributions are welcome!
+pyBatis is an open-source project. Contributions are welcome!
 
 1. Check existing issues or create a new issue
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -301,12 +301,12 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## 🔗 Links
 
-- [Documentation](https://pybatis-neo.readthedocs.io)
+- [Documentation](https://github.com/jinto/pybatis#readme)
 - [GitHub Repository](https://github.com/jinto/pybatis)
 - [Issue Tracker](https://github.com/jinto/pybatis/issues)
-- [PyPI](https://pypi.org/project/pybatis-neo/)
+- [PyPI](https://pypi.org/project/pybatis/)
 - [Changelog](CHANGELOG.md)
 
 ---
 
-**Write clean and maintainable SQL code in FastAPI with pyBatis Neo! 🚀**
+**Write clean and maintainable SQL code in FastAPI with pyBatis! 🚀**
